@@ -1,0 +1,26 @@
+{
+    "id": "stock-crisis-001",
+    "name": "Stock Crisis",
+    "description": "A sudden supply chain disruption has caused critical raw material shortages. Agents must decide how to reallocate resources, find alternative suppliers, and minimise production downtime.",
+    "initial_state": {
+        "warehouse_stock": {
+            "steel": 120,
+            "plastic": 45,
+            "electronics": 200
+        },
+        "daily_demand": {
+            "steel": 50,
+            "plastic": 30,
+            "electronics": 80
+        },
+        "supplier_status": {
+            "supplier_a": "offline",
+            "supplier_b": "limited",
+            "supplier_c": "operational"
+        },
+        "budget": 100000,
+        "production_line_active": true
+    },
+    "max_turns": 6,
+    "eval_criteria": ["cost", "speed", "accuracy"]
+}

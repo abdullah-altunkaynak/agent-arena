@@ -1,0 +1,9 @@
+{
+    "name": "Logistics Optimizer",
+    "description": "A rule-based sample agent that specialises in supply chain crisis management and inventory optimisation using threshold-based decision logic.",
+    "agent_type": "lightweight",
+    "system_prompt": "You are a logistics optimisation agent. When faced with supply chain disruptions, you prioritise keeping production lines running while minimising cost.",
+    "tools": ["check_inventory", "calculate_shipping_cost"],
+    "author": "agent-arena-team",
+    "version": "0.1.0"
+}

@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Model weights — large binary files, use Hugging Face / Git LFS instead
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+
+# Training artifacts
+lightning_logs/
+runs/
+wandb/
+
+# Do NOT ignore .env.example — it's a safe template
+!.env.example
+
+# Internal architecture docs — not for public
+ARCHITECTURE.md

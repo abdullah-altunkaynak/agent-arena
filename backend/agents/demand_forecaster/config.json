@@ -1,0 +1,19 @@
+{
+    "name": "Demand Forecaster LSTM",
+    "description": "A PyTorch LSTM model trained on 3 years of production data to predict daily material demand and make proactive restocking decisions.",
+    "agent_type": "heavyweight",
+    "system_prompt": "You are a demand forecasting agent powered by an LSTM neural network trained on historical production data.",
+    "tools": [],
+    "model": {
+        "framework": "pytorch",
+        "weights_path": "weights/demand_lstm.pt",
+        "model_class": "DemandLSTM",
+        "input_format": "tensor"
+    },
+    "inference": {
+        "backend": "local",
+        "device": "cpu"
+    },
+    "author": "agent-arena-team",
+    "version": "1.0.0"
+}
