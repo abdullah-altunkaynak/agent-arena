@@ -26,7 +26,7 @@ class DemandForecasterAgent(HeavyWeightAgent):
         """Load the trained model weights. Falls back gracefully if weights don't exist."""
         from backend.agents.demand_forecaster.model import DemandLSTM
 
-        self.model = DemandLSTM(input_size=3, hidden_size=64, num_layers=2, output_size=3)
+        self.model = DemandLSTM(input_size=9, hidden_size=64, num_layers=2, output_size=3)
         self.materials = ["steel", "plastic", "electronics"]
         self._weights_loaded = False
 
@@ -51,15 +51,21 @@ class DemandForecasterAgent(HeavyWeightAgent):
         daily_demand = scenario_state.get("daily_demand", {})
         supplier_status = scenario_state.get("supplier_status", {})
 
-        # Build input tensor from scenario state (simulated 7-day history)
-        features = []
-        for material in self.materials:
-            stock = warehouse.get(material, 0)
-            demand = daily_demand.get(material, 0)
-            reliability = self._supplier_score(supplier_status)
-            features.append([float(stock), float(demand), reliability])
+        # Build input tensor with 9 features: 3 materials × [stock_norm, demand_norm, supplier_rel]
+        # Normalization ranges match training data
+        stock_maxes = [900.0, 550.0, 1400.0]  # Approx max stock from training
+        demand_maxes = [85.0, 55.0, 140.0]    # Approx max demand from training
+        reliability = self._supplier_score(supplier_status)
 
-        # Shape: (1, 7, 3) — repeat current state as a pseudo-sequence for demo
+        features = []
+        for i, material in enumerate(self.materials):
+            stock = float(warehouse.get(material, 0))
+            demand = float(daily_demand.get(material, 0))
+            stock_norm = min(stock / stock_maxes[i], 1.0)
+            demand_norm = min(demand / demand_maxes[i], 1.0)
+            features.extend([stock_norm, demand_norm, reliability])
+
+        # Shape: (1, 7, 9) — repeat current state as a pseudo-sequence
         input_tensor = torch.tensor([features] * 7, dtype=torch.float32).unsqueeze(0)
 
         with torch.no_grad():

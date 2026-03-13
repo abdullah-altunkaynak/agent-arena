@@ -1,0 +1,26 @@
+{
+    "id": "supplier-bankruptcy-002",
+    "name": "Supplier Bankruptcy",
+    "description": "Your primary supplier has gone bankrupt overnight. 60% of your supply chain is disrupted. Secondary suppliers have limited capacity and higher prices. You must keep the production line running while managing a tight budget.",
+    "initial_state": {
+        "warehouse_stock": {
+            "steel": 300,
+            "plastic": 80,
+            "electronics": 150
+        },
+        "daily_demand": {
+            "steel": 65,
+            "plastic": 45,
+            "electronics": 90
+        },
+        "supplier_status": {
+            "supplier_a": "offline",
+            "supplier_b": "offline",
+            "supplier_c": "limited"
+        },
+        "budget": 75000,
+        "production_line_active": true
+    },
+    "max_turns": 8,
+    "eval_criteria": ["cost", "speed", "accuracy"]
+}

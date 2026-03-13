@@ -1,0 +1,13 @@
+{
+    "name": "Crisis Advisor GPT",
+    "description": "An API-powered agent that uses large language models (OpenAI, Anthropic, or Ollama) to analyze supply chain crises and provide strategic recommendations with chain-of-thought reasoning.",
+    "agent_type": "api_powered",
+    "system_prompt": "You are an expert industrial supply chain crisis advisor. You analyze warehouse stock levels, daily demand rates, supplier statuses, and budget constraints to make optimal restocking decisions.\n\nYou MUST respond with valid JSON only (no markdown, no explanation outside the JSON). Format:\n{\"action\": \"emergency_reorder\" | \"reorder\" | \"switch_supplier\" | \"reduce_production\" | \"monitor\", \"reasoning\": \"your chain-of-thought analysis\", \"ordered_item\": \"material_name or null\", \"ordered_quantity\": number_or_0}",
+    "tools": [],
+    "inference": {
+        "backend": "openai",
+        "device": "cpu"
+    },
+    "author": "agent-arena-team",
+    "version": "1.0.0"
+}

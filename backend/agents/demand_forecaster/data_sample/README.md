@@ -17,9 +17,12 @@ and value ranges the LSTM model expects.
 | `daily_consumption` | float | 0 - 200 | Units consumed that day |
 | `supplier_reliability` | float | 0.0 - 1.0 | Average supplier score |
 | `actual_demand` | float | 0 - 200 | Ground truth demand (training label) |
+| `crisis_event` | int | 0 or 1 | Whether a supply crisis was active that day |
 
 ## Notes
 
 - The full dataset is not included in the repo due to size
 - Engineers can generate synthetic data using `training/train.py`
 - To use your own data, format it as shown in the CSV sample
+- Crisis events cause demand spikes (~30-70%) and supplier reliability drops (~40%)
+- The sample includes both normal days (Jan 1-5) and crisis days (Mar 15-16)

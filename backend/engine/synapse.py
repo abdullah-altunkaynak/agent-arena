@@ -190,10 +190,13 @@ def load_agent(agent_slug: str, api_key: str = "") -> BaseAgent:
 
     # Import agent module and find the BaseAgent subclass
     mod = importlib.import_module(f"backend.agents.{agent_slug}.agent")
+    # Exclude the base tier classes — we want the concrete implementation
+    from backend.engine.base_agent import LightweightAgent, APIPoweredAgent, HeavyWeightAgent
+    _base_classes = {BaseAgent, LightweightAgent, APIPoweredAgent, HeavyWeightAgent}
     agent_cls = None
     for attr_name in dir(mod):
         attr = getattr(mod, attr_name)
-        if isinstance(attr, type) and issubclass(attr, BaseAgent) and attr is not BaseAgent:
+        if isinstance(attr, type) and issubclass(attr, BaseAgent) and attr not in _base_classes:
             agent_cls = attr
             break
 
