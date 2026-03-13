@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.engine.synapse import router as synapse_router
-from backend.agents.router import router as agents_router
+from engine.synapse import router as synapse_router
+from agents.router import router as agents_router
 
 app = FastAPI(
     title="Agent-Arena API",
