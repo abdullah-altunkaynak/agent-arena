@@ -13,7 +13,6 @@ Agent-Arena supports **three types** of agents — pick the one that matches you
 ## Prerequisites
 
 - Python 3.10+
-- Basic understanding of the project (see [ARCHITECTURE.md](../ARCHITECTURE.md))
 - For heavyweight agents: PyTorch or your ML framework of choice
 
 ## Step-by-Step

@@ -165,7 +165,7 @@ See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for the full guide with code ex
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/agent-arena.git
+git clone https://github.com/abdullah-altunkaynak/agent-arena.git
 cd agent-arena
 
 # Backend
@@ -201,4 +201,4 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## Contact
 
-Have questions, ideas, or want to contribute? Open an [issue](https://github.com/YOUR_USERNAME/agent-arena/issues) or submit a pull request. Every idea matters — no contribution is too small.
+Have questions, ideas, or want to contribute? Open an [issue](https://github.com/abdullah-altunkaynak/agent-arena/issues) or submit a pull request. Every idea matters — no contribution is too small.

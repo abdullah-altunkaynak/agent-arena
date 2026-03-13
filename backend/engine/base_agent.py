@@ -181,13 +181,33 @@ class LightweightAgent(BaseAgent):
 
 class APIPoweredAgent(BaseAgent):
     """
-    Base for agents that call external LLM APIs (OpenAI, Anthropic, etc.).
+    Base for agents that call external LLM APIs (OpenAI, Anthropic, Ollama, custom endpoint).
     The api_key is injected at runtime from the frontend (BYOK).
+
+    Helper: call `self.call_llm(user_message)` inside `decide()` to get a response string
+    from whichever backend is configured — no boilerplate needed in subclasses.
     """
 
     def __init__(self, config: AgentConfig, api_key: str = "") -> None:
         super().__init__(config)
         self.config.inference.api_key = api_key
+
+    def call_llm(self, user_message: str, temperature: float = 0.3, max_tokens: int = 512) -> str:
+        """
+        Send a message to the configured LLM backend and return the response text.
+
+        Uses self.config.system_prompt as the system message.
+        Raises RuntimeError with a descriptive message on failure.
+        """
+        from backend.engine.inference import dispatcher
+
+        return dispatcher.complete(
+            system_prompt=self.config.system_prompt,
+            user_message=user_message,
+            config=self.config.inference,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
 
 
 class HeavyWeightAgent(BaseAgent):
@@ -205,6 +225,3 @@ class HeavyWeightAgent(BaseAgent):
         raise NotImplementedError(
             f"HeavyWeightAgent '{self.config.name}' must implement setup() to load its model."
         )
-        AgentResponse
-        """
-        ...

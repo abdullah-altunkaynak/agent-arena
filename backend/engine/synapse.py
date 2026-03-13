@@ -7,7 +7,7 @@ Manages the simulation loop:
   3. Run turns — each turn, the current agent receives the shared state
      and returns an action
   4. Update state and pass it to the next agent
-  5. Produce a final evaluation
+  5. Produce a final evaluation (cost, speed, accuracy)
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from __future__ import annotations
 import importlib
 import inspect
 import json
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -70,6 +71,7 @@ class TurnRecord:
     turn: int
     agent_name: str
     response: AgentResponse
+    duration_ms: float = 0.0  # How long the agent took to decide
 
 
 @dataclass
@@ -100,9 +102,16 @@ class SynapseEngine:
                 {"agent": r.agent_name, "action": r.response.action} for r in self.history
             ]
 
+            t0 = time.perf_counter()
             response = agent.decide(self.state)
+            duration_ms = (time.perf_counter() - t0) * 1000
 
-            record = TurnRecord(turn=turn_no, agent_name=agent.config.name, response=response)
+            record = TurnRecord(
+                turn=turn_no,
+                agent_name=agent.config.name,
+                response=response,
+                duration_ms=round(duration_ms, 2),
+            )
             self.history.append(record)
 
             # Apply action data to shared state
@@ -115,11 +124,52 @@ class SynapseEngine:
             scores=scores,
         )
 
-    def _evaluate(self) -> dict[str, float]:
-        """Placeholder evaluation — will be expanded with real metrics."""
-        scores: dict[str, float] = {}
+    def _evaluate(self) -> dict[str, dict[str, float]]:
+        """
+        Score each agent on three axes, each normalized to 0.0–1.0:
+
+        cost     → lower budget spent = higher score
+                   1.0 = spent nothing, 0.0 = spent entire budget
+        speed    → lower average decision time = higher score
+                   1.0 = instant, 0.0 = >=5 000 ms average
+        accuracy → combination of:
+                     - production line still active at end (+0.5)
+                     - no stockouts occurred during simulation (+0.5)
+        """
+        initial_budget: float = float(self.scenario.initial_state.get("budget", 1))
+        final_budget: float = float(self.state.get("budget", initial_budget))
+        budget_spent = max(initial_budget - final_budget, 0)
+        cost_score = max(0.0, 1.0 - budget_spent / initial_budget) if initial_budget > 0 else 1.0
+
+        # Check stockouts: any material hitting 0 is considered a stockout
+        stockout_occurred = any(
+            v <= 0
+            for k, v in self.state.items()
+            if k == "warehouse_stock" and isinstance(v, dict)
+            for v in v.values()  # type: ignore[assignment]
+        )
+        production_active = bool(self.state.get("production_line_active", True))
+        accuracy_score = (0.5 if production_active else 0.0) + (0.5 if not stockout_occurred else 0.0)
+
+        scores: dict[str, dict[str, float]] = {}
         for agent in self.agents:
-            scores[agent.config.name] = 0.0
+            agent_turns = [r for r in self.history if r.agent_name == agent.config.name]
+            if agent_turns:
+                avg_ms = sum(r.duration_ms for r in agent_turns) / len(agent_turns)
+            else:
+                avg_ms = 0.0
+
+            # 5000 ms = score 0, 0 ms = score 1.0 (linear)
+            speed_score = max(0.0, 1.0 - avg_ms / 5000.0)
+
+            scores[agent.config.name] = {
+                "cost": round(cost_score, 3),
+                "speed": round(speed_score, 3),
+                "accuracy": round(accuracy_score, 3),
+                "total": round((cost_score + speed_score + accuracy_score) / 3, 3),
+                "avg_decision_ms": round(avg_ms, 2),
+            }
+
         return scores
 
 
@@ -208,6 +258,7 @@ async def run_arena(request: RunRequest):
                 "action": t.response.action,
                 "reasoning": t.response.reasoning,
                 "data": t.response.data,
+                "duration_ms": t.duration_ms,
             }
             for t in result.turns
         ],
