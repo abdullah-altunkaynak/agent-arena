@@ -16,7 +16,7 @@ from typing import Any
 
 import torch
 
-from backend.engine.base_agent import AgentConfig, AgentResponse, HeavyWeightAgent
+from engine.base_agent import AgentConfig, AgentResponse, HeavyWeightAgent
 
 
 class DemandForecasterAgent(HeavyWeightAgent):
@@ -24,7 +24,7 @@ class DemandForecasterAgent(HeavyWeightAgent):
 
     def setup(self) -> None:
         """Load the trained model weights. Falls back gracefully if weights don't exist."""
-        from backend.agents.demand_forecaster.model import DemandLSTM
+        from agents.demand_forecaster.model import DemandLSTM
 
         self.model = DemandLSTM(input_size=9, hidden_size=64, num_layers=2, output_size=3)
         self.materials = ["steel", "plastic", "electronics"]

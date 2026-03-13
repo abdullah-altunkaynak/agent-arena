@@ -18,7 +18,7 @@ from typing import Any
 
 import httpx
 
-from backend.engine.base_agent import InferenceBackend, InferenceConfig
+from engine.base_agent import InferenceBackend, InferenceConfig
 
 
 class InferenceDispatcher:
@@ -36,7 +36,7 @@ class InferenceDispatcher:
         max_tokens: int = 512,
     ) -> str:
         """
-        Dispatch a completion request to the configured backend.
+        Dispatch a completion request to the configured
 
         Returns the model's raw text response.
         Raises RuntimeError with a clear message on failure.

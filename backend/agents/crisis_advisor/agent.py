@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from backend.engine.base_agent import AgentConfig, AgentResponse, APIPoweredAgent
+from engine.base_agent import AgentConfig, AgentResponse, APIPoweredAgent
 
 
 class CrisisAdvisorAgent(APIPoweredAgent):

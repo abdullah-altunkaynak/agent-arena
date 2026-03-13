@@ -23,7 +23,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.engine.base_agent import AgentConfig, AgentResponse, BaseAgent
+from engine.base_agent import AgentConfig, AgentResponse, BaseAgent
 
 router = APIRouter()
 
@@ -189,9 +189,9 @@ def load_agent(agent_slug: str, api_key: str = "") -> BaseAgent:
     config = AgentConfig.from_file(config_path)
 
     # Import agent module and find the BaseAgent subclass
-    mod = importlib.import_module(f"backend.agents.{agent_slug}.agent")
+    mod = importlib.import_module(f"agents.{agent_slug}.agent")
     # Exclude the base tier classes — we want the concrete implementation
-    from backend.engine.base_agent import LightweightAgent, APIPoweredAgent, HeavyWeightAgent
+    from engine.base_agent import LightweightAgent, APIPoweredAgent, HeavyWeightAgent
     _base_classes = {BaseAgent, LightweightAgent, APIPoweredAgent, HeavyWeightAgent}
     agent_cls = None
     for attr_name in dir(mod):

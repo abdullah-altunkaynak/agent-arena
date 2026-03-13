@@ -73,7 +73,7 @@
                 "endpoint_url": {
                     "type": "string",
                     "format": "uri",
-                    "description": "URL for custom_endpoint backend."
+                    "description": "URL for custom_endpoint"
                 },
                 "ollama_model": {
                     "type": "string",

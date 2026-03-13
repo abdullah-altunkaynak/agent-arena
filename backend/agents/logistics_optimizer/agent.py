@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from backend.engine.base_agent import AgentConfig, AgentResponse, LightweightAgent
+from engine.base_agent import AgentConfig, AgentResponse, LightweightAgent
 
 
 class LogisticsOptimizerAgent(LightweightAgent):

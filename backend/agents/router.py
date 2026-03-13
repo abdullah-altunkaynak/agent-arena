@@ -10,7 +10,7 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
-from backend.engine.validator import validate_agent_folder
+from engine.validator import validate_agent_folder
 
 router = APIRouter()
 

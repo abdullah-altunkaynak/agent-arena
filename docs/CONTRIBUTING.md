@@ -88,7 +88,7 @@ Choose the right base class for your agent type:
 
 ```python
 # Lightweight
-from backend.engine.base_agent import LightweightAgent, AgentResponse
+from engine.base_agent import LightweightAgent, AgentResponse
 
 class MyAgent(LightweightAgent):
     def decide(self, scenario_state: dict) -> AgentResponse:
@@ -96,7 +96,7 @@ class MyAgent(LightweightAgent):
         return AgentResponse(action="...", reasoning="...", data={})
 
 # API-Powered
-from backend.engine.base_agent import APIPoweredAgent, AgentResponse
+from engine.base_agent import APIPoweredAgent, AgentResponse
 
 class MyAgent(APIPoweredAgent):
     def decide(self, scenario_state: dict) -> AgentResponse:
@@ -105,7 +105,7 @@ class MyAgent(APIPoweredAgent):
         return AgentResponse(action="...", reasoning="...", data={})
 
 # Heavy-Weight
-from backend.engine.base_agent import HeavyWeightAgent, AgentResponse
+from engine.base_agent import HeavyWeightAgent, AgentResponse
 
 class MyAgent(HeavyWeightAgent):
     def setup(self):

@@ -199,7 +199,7 @@ class APIPoweredAgent(BaseAgent):
         Uses self.config.system_prompt as the system message.
         Raises RuntimeError with a descriptive message on failure.
         """
-        from backend.engine.inference import dispatcher
+        from engine.inference import dispatcher
 
         return dispatcher.complete(
             system_prompt=self.config.system_prompt,

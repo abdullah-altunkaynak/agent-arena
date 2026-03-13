@@ -78,7 +78,7 @@ def validate_agent_folder(agent_dir: Path) -> ValidationResult:
             )
         else:
             try:
-                spec_name = f"backend.agents.{agent_dir.name}.functions"
+                spec_name = f"agents.{agent_dir.name}.functions"
                 mod = importlib.import_module(spec_name)
                 for tool_name in declared_tools:
                     if not hasattr(mod, tool_name):
@@ -96,9 +96,9 @@ def validate_agent_folder(agent_dir: Path) -> ValidationResult:
         result.fail(f"Missing agent.py in {agent_dir.name}/")
     else:
         try:
-            spec_name = f"backend.agents.{agent_dir.name}.agent"
+            spec_name = f"agents.{agent_dir.name}.agent"
             mod = importlib.import_module(spec_name)
-            from backend.engine.base_agent import BaseAgent
+            from engine.base_agent import BaseAgent
 
             agent_classes = [
                 obj
