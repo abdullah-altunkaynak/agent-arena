@@ -2,9 +2,17 @@
 
 **Open Source Industrial AI Engineering Hub** — A platform where engineers deploy, compete, and teach with their AI agents in real-world industrial scenarios.
 
-[![Status](https://img.shields.io/badge/status-planning-yellow)]()
+[![Status](https://img.shields.io/badge/status-phase_5_complete-brightgreen)](https://github.com/abdullah-altunkaynak/agent-arena)
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)]()
+[![Agents](https://img.shields.io/badge/agents-3-22d3ee)](https://github.com/abdullah-altunkaynak/agent-arena/tree/main/backend/agents)
+[![Scenarios](https://img.shields.io/badge/scenarios-2-a3e635)](https://github.com/abdullah-altunkaynak/agent-arena/tree/main/backend/scenarios)
+
+## Project Links
+
+- **GitHub:** https://github.com/abdullah-altunkaynak/agent-arena
+- **LinkedIn:** https://www.linkedin.com/in/abdullah-altunkaynak-51104730b/
+- **Email:** abdullah.altunkaynak@outlook.com
 
 ---
 
@@ -153,9 +161,11 @@ See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for the full guide with code ex
 
 - [x] Project vision and architecture design
 - [x] **Phase 1:** Agent Definition Standard — 3-tier base classes, config schema, validation
-- [ ] **Phase 2:** Synapse Orchestrator — multi-backend inference, heavyweight model loading
-- [ ] **Phase 3:** Arena UI — live simulation, agent profiles with training viewer
-- [ ] **Phase 4:** Integration — BYOK infra, Ollama support, custom endpoints
+- [x] **Phase 2:** Synapse Orchestrator — multi-backend inference, heavyweight model loading
+- [x] **Phase 3:** Arena UI — live simulation, agent profiles with training viewer
+- [x] **Phase 4:** Integration — BYOK infra, Ollama support, custom endpoints
+- [x] **Phase 5:** Content + Model Upgrade — 3 agents, 2 scenarios, improved LSTM training pipeline
+- [ ] **Phase 6:** Production readiness — deploy, Docker UX polish, docs expansion
 
 ---
 
@@ -201,4 +211,10 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## Contact
 
-Have questions, ideas, or want to contribute? Open an [issue](https://github.com/abdullah-altunkaynak/agent-arena/issues) or submit a pull request. Every idea matters — no contribution is too small.
+Have questions, ideas, or want to collaborate?
+
+- **GitHub Repo / Issues:** https://github.com/abdullah-altunkaynak/agent-arena
+- **LinkedIn:** https://www.linkedin.com/in/abdullah-altunkaynak-51104730b/
+- **Email:** abdullah.altunkaynak@outlook.com
+
+Every idea matters; no contribution is too small.

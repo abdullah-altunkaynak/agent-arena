@@ -42,6 +42,12 @@ const STATS = [
 
 const TECH = ["Next.js", "FastAPI", "Python", "Framer Motion", "Tailwind CSS", "Docker"];
 
+const PUBLIC_PROFILE = {
+  github: "https://github.com/abdullah-altunkaynak/agent-arena",
+  linkedin: "https://www.linkedin.com/in/abdullah-altunkaynak-51104730b/",
+  email: "abdullah.altunkaynak@outlook.com",
+};
+
 const staggerChildren = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.12 } },
@@ -149,15 +155,15 @@ export default function Home() {
               <div className="p-5 font-mono text-xs space-y-1.5 bg-abyss/90">
                 {[
                   { t: "accent", txt: "› Scenario loaded: Stock Crisis [stock-crisis-001]" },
-                  { t: "text",   txt: "  Agents selected: demand_forecaster, logistics_optimizer" },
+                  { t: "text",   txt: "  Agents selected: demand_forecaster, logistics_optimizer, crisis_advisor" },
                   { t: "accent", txt: "› Turn 1 · demand_forecaster" },
                   { t: "text",   txt: '  Action: "increase_safety_stock"  |  ∆budget: -12,500 ₺' },
-                  { t: "accent", txt: "› Turn 2 · logistics_optimizer" },
-                  { t: "text",   txt: '  Action: "route_to_supplier_c"  |  ∆budget: -8,200 ₺' },
-                  { t: "success",txt: "  ✓ supplier_c operational — steel +80 units secured" },
+                  { t: "accent", txt: "› Turn 2 · crisis_advisor" },
+                  { t: "text",   txt: '  Action: "emergency_reorder"  |  target: plastic' },
+                  { t: "success",txt: "  ✓ supplier_c limited route confirmed, fallback plan active" },
                   { t: "accent", txt: "› Evaluation complete" },
-                  { t: "success",txt: "  demand_forecaster   cost:0.875  speed:0.982  acc:1.000" },
-                  { t: "warn",   txt: "  logistics_optimizer cost:0.918  speed:0.877  acc:0.500" },
+                  { t: "success",txt: "  logistics_optimizer cost:1.000  speed:1.000  acc:1.000" },
+                  { t: "success",txt: "  demand_forecaster   cost:1.000  speed:0.998  acc:1.000" },
                 ].map((l, i) => (
                   <motion.div
                     key={i}
@@ -265,6 +271,60 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ── REPO + CREATOR ──────────────────────────────────────────── */}
+        <section className="py-8 px-6 border-t border-[rgba(255,255,255,.04)]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-5xl mx-auto"
+          >
+            <div className="rounded-2xl p-6 md:p-8 glass border border-[rgba(34,211,238,.18)] relative overflow-hidden">
+              <div className="absolute inset-0 bg-glow-radial opacity-20 pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
+                <div className="flex-1">
+                  <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-2">Project Owner</p>
+                  <h3 className="font-display text-2xl md:text-3xl font-bold text-spark mb-2">
+                    Abdullah Altunkaynak
+                  </h3>
+                  <p className="text-sm text-wire leading-relaxed max-w-xl">
+                    Phase 5 now live: 3 agents, 2 scenarios, and an upgraded forecasting model.
+                    Explore the repository, connect on LinkedIn, or contact directly for collaborations.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
+                  <a
+                    href={PUBLIC_PROFILE.github}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl bg-forge border border-[rgba(255,255,255,.07)] text-wire hover:text-cyan-400 hover:border-cyan-400/35 transition-all"
+                  >
+                    <img src="https://img.icons8.com/fluency-systems-filled/48/github.png" alt="GitHub" className="w-5 h-5 opacity-90" />
+                    <span className="text-xs font-mono">GitHub</span>
+                  </a>
+                  <a
+                    href={PUBLIC_PROFILE.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl bg-forge border border-[rgba(255,255,255,.07)] text-wire hover:text-cyan-400 hover:border-cyan-400/35 transition-all"
+                  >
+                    <img src="https://img.icons8.com/fluency-systems-filled/48/linkedin.png" alt="LinkedIn" className="w-5 h-5 opacity-90" />
+                    <span className="text-xs font-mono">LinkedIn</span>
+                  </a>
+                  <a
+                    href={`mailto:${PUBLIC_PROFILE.email}`}
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl bg-forge border border-[rgba(255,255,255,.07)] text-wire hover:text-cyan-400 hover:border-cyan-400/35 transition-all"
+                  >
+                    <img src="https://img.icons8.com/fluency-systems-filled/48/new-post.png" alt="Email" className="w-5 h-5 opacity-90" />
+                    <span className="text-xs font-mono">Email</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
         {/* ── CTA ───────────────────────────────────────────────────────── */}
         <section className="py-24 px-6">
           <motion.div
@@ -303,7 +363,7 @@ export default function Home() {
               <span>Agent<span className="text-cyan-400">Arena</span> · Open Source Industrial AI Hub</span>
             </div>
             <div className="text-xs font-mono text-mist">
-              Phase 3 · {new Date().getFullYear()}
+              Phase 5 · {new Date().getFullYear()}
             </div>
           </div>
         </footer>

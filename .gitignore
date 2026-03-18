@@ -47,3 +47,4 @@ wandb/
 
 # Internal architecture docs — not for public
 ARCHITECTURE.md
+droplet.txt

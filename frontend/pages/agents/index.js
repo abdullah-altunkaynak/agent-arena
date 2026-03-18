@@ -12,6 +12,7 @@ import StatusBadge from "../../components/StatusBadge";
 import Button from "../../components/Button";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const CONTRIBUTING_GUIDE_URL = "https://github.com/abdullah-altunkaynak/agent-arena/blob/main/docs/CONTRIBUTING.md";
 
 const TYPE_LABELS = {
   lightweight: { label: "Lightweight", color: "acid" },
@@ -281,7 +282,11 @@ export default function Agents() {
               <p className="text-wire text-sm max-w-md mx-auto mb-6 leading-relaxed">
                 Subclass <code className="text-cyan-400 bg-steel px-1.5 py-0.5 rounded text-xs">BaseAgent</code>, add a <code className="text-cyan-400 bg-steel px-1.5 py-0.5 rounded text-xs">config.json</code>, and open a pull-request.
               </p>
-              <Button variant="secondary" size="md">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => window.open(CONTRIBUTING_GUIDE_URL, "_blank", "noopener,noreferrer")}
+              >
                 <ExternalLink size={15} />
                 Read Contributing Guide
               </Button>
