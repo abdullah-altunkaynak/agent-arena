@@ -7,37 +7,28 @@
 
 /* ─── CSS Custom Properties ─────────────────────────────────────────── */
 :root {
-  --bg-primary:    #080A0F;
-  --bg-secondary:  #0D1117;
-  --bg-card:       #161B24;
-  --border-subtle: rgba(34,211,238,.1);
-  --border-accent: rgba(34,211,238,.35);
-  --text-primary:  #E2E8F0;
-  --text-secondary:#94A3B8;
-  --accent-cyan:   #22D3EE;
-  --accent-acid:   #A3E635;
-  --accent-amber:  #FBBF24;
+  --bg-primary: #080A0F;
+  --bg-secondary: #0D1117;
+  --bg-card: #161B24;
+  --border-subtle: rgba(34, 211, 238, .1);
+  --border-accent: rgba(34, 211, 238, .35);
+  --text-primary: #E2E8F0;
+  --text-secondary: #94A3B8;
+  --accent-cyan: #22D3EE;
+  --accent-acid: #A3E635;
+  --accent-amber: #FBBF24;
   --scrollbar-track: #0D1117;
   --scrollbar-thumb: #1E2530;
 }
 
-.light {
-  --bg-primary:    #F0F4F8;
-  --bg-secondary:  #FFFFFF;
-  --bg-card:       #FFFFFF;
-  --border-subtle: rgba(14,116,144,.12);
-  --border-accent: rgba(14,116,144,.4);
-  --text-primary:  #0F172A;
-  --text-secondary:#475569;
-  --accent-cyan:   #0891B2;
-  --accent-acid:   #65A30D;
-  --accent-amber:  #D97706;
-  --scrollbar-track: #E2E8F0;
-  --scrollbar-thumb: #94A3B8;
-}
+
 
 /* ─── Base resets ───────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 html {
   scroll-behavior: smooth;
@@ -54,77 +45,123 @@ body {
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────── */
-::-webkit-scrollbar        { width: 6px; height: 6px; }
-::-webkit-scrollbar-track  { background: var(--scrollbar-track); }
-::-webkit-scrollbar-thumb  { background: var(--scrollbar-thumb); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
+}
 
 /* ─── Selection ─────────────────────────────────────────────────────── */
-::selection { background: rgba(34,211,238,.25); color: #fff; }
+::selection {
+  background: rgba(34, 211, 238, .25);
+  color: #fff;
+}
 
 /* ─── Utilities ─────────────────────────────────────────────────────── */
-.font-display { font-family: 'Space Grotesk', sans-serif; }
-.font-mono    { font-family: 'JetBrains Mono', monospace; }
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
 
 .glass {
-  background: rgba(22,27,36,.6);
+  background: rgba(22, 27, 36, .6);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(34,211,238,.08);
-}
-.light .glass {
-  background: rgba(255,255,255,.7);
-  border: 1px solid rgba(14,116,144,.12);
+  border: 1px solid rgba(34, 211, 238, .08);
 }
 
-.neon-text-cyan  { text-shadow: 0 0 12px rgba(34,211,238,.8), 0 0 24px rgba(34,211,238,.4); }
-.neon-text-acid  { text-shadow: 0 0 12px rgba(163,230,53,.8), 0 0 24px rgba(163,230,53,.4); }
-.neon-border     { box-shadow: 0 0 0 1px rgba(34,211,238,.4), 0 0 16px rgba(34,211,238,.15); }
+
+.neon-text-cyan {
+  text-shadow: 0 0 12px rgba(34, 211, 238, .8), 0 0 24px rgba(34, 211, 238, .4);
+}
+
+.neon-text-acid {
+  text-shadow: 0 0 12px rgba(163, 230, 53, .8), 0 0 24px rgba(163, 230, 53, .4);
+}
+
+.neon-border {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, .4), 0 0 16px rgba(34, 211, 238, .15);
+}
 
 .scan-overlay {
   position: fixed;
   inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,.03) 2px,
-    rgba(0,0,0,.03) 4px
-  );
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, .03) 2px,
+      rgba(0, 0, 0, .03) 4px);
   pointer-events: none;
   z-index: 9999;
 }
-.light .scan-overlay { opacity: .3; }
+
 
 @keyframes scanLine {
-  from { transform: translateY(-100%); }
-  to   { transform: translateY(100vh); }
+  from {
+    transform: translateY(-100%);
+  }
+
+  to {
+    transform: translateY(100vh);
+  }
 }
 
 .grid-bg {
   background-image:
-    linear-gradient(rgba(34,211,238,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34,211,238,.04) 1px, transparent 1px);
+    linear-gradient(rgba(34, 211, 238, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, .04) 1px, transparent 1px);
   background-size: 40px 40px;
 }
+
 .light .grid-bg {
   background-image:
-    linear-gradient(rgba(14,116,144,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(14,116,144,.06) 1px, transparent 1px);
+    linear-gradient(rgba(14, 116, 144, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 116, 144, .06) 1px, transparent 1px);
 }
 
 /* ─── Score bar animation ───────────────────────────────────────────── */
 @keyframes scoreGrow {
-  from { width: 0; }
-  to   { width: var(--score-width); }
+  from {
+    width: 0;
+  }
+
+  to {
+    width: var(--score-width);
+  }
 }
-.score-bar { animation: scoreGrow .8s cubic-bezier(.4,0,.2,1) forwards; }
+
+.score-bar {
+  animation: scoreGrow .8s cubic-bezier(.4, 0, .2, 1) forwards;
+}
 
 /* ─── Terminal text blink ────────────────────────────────────────────── */
 @keyframes blink {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
+
 .cursor-blink::after {
   content: '▋';
   animation: blink 1s step-start infinite;
@@ -134,14 +171,21 @@ body {
 
 /* ─── Rotating border gradient ──────────────────────────────────────── */
 @keyframes borderRotate {
-  from { --angle: 0deg; }
-  to   { --angle: 360deg; }
+  from {
+    --angle: 0deg;
+  }
+
+  to {
+    --angle: 360deg;
+  }
 }
+
 @property --angle {
   syntax: '<angle>';
   initial-value: 0deg;
   inherits: false;
 }
+
 .rotating-border {
   border: 1px solid transparent;
   background:
@@ -149,4 +193,3 @@ body {
     conic-gradient(from var(--angle), transparent 70%, var(--accent-cyan) 100%) border-box;
   animation: borderRotate 4s linear infinite;
 }
-

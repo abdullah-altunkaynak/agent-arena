@@ -1,0 +1,437 @@
+"""
+Blog Database Service
+Supabase database operations for blog posts
+"""
+
+import os
+from typing import Optional, List, Dict
+from datetime import datetime
+from logging import getLogger
+from dotenv import load_dotenv
+
+from supabase import create_client, Client
+from .models import PostCreate, PostUpdate, PostResponse, PostStatus
+
+# Load environment variables
+load_dotenv()
+
+logger = getLogger(__name__)
+
+
+class BlogDatabaseService:
+    """Service for handling blog database operations via Supabase"""
+
+    def __init__(self):
+        """Initialize Supabase client"""
+        self.supabase_url = os.getenv("SUPABASE_URL")
+        # Use service role key for backend operations
+        self.supabase_key = (
+            os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            or os.getenv("SUPABASE_KEY")
+            or os.getenv("SUPABASE_ANON_KEY")
+        )
+        self.blog_images_bucket = os.getenv("SUPABASE_BLOG_IMAGES_BUCKET", "blog-images")
+
+        if not self.supabase_url or not self.supabase_key:
+            logger.warning(
+                "Supabase credentials not configured. "
+                "Set SUPABASE_URL and one of SUPABASE_SERVICE_ROLE_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY env variables."
+            )
+            self.client: Optional[Client] = None
+        else:
+            self.client = create_client(self.supabase_url, self.supabase_key)
+            logger.info("Supabase client initialized successfully")
+
+    def _check_connection(self):
+        """Check if Supabase client is properly initialized"""
+        if not self.client:
+            raise RuntimeError(
+                "Supabase client not initialized. "
+                "Ensure SUPABASE_URL and one of SUPABASE_SERVICE_ROLE_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY are set."
+            )
+
+    async def create_post(self, post_data: PostCreate) -> PostResponse:
+        """
+        Create a new blog post
+
+        Args:
+            post_data: PostCreate model with post details
+
+        Returns:
+            PostResponse: Created post data
+        """
+        self._check_connection()
+
+        payload = {
+            "title_tr": post_data.title_tr,
+            "content_tr": post_data.content_tr,
+            "title_en": post_data.title_en,
+            "content_en": post_data.content_en,
+            "slug": post_data.slug,
+            "status": post_data.status.value,
+            "excerpt_tr": post_data.excerpt_tr,
+            "excerpt_en": post_data.excerpt_en,
+            "featured_image_url": post_data.featured_image_url,
+        }
+
+        response = self.client.table("posts").insert(payload).execute()
+
+        if response.data:
+            logger.info(f"Post created successfully: {response.data[0]['id']}")
+            return PostResponse(**response.data[0])
+        else:
+            raise Exception("Failed to create post in database")
+
+    async def get_post_by_id(self, post_id: str) -> Optional[PostResponse]:
+        """
+        Retrieve a post by ID
+
+        Args:
+            post_id: UUID of the post
+
+        Returns:
+            PostResponse or None if not found
+        """
+        self._check_connection()
+
+        response = self.client.table("posts").select("*").eq("id", post_id).execute()
+
+        if response.data:
+            return PostResponse(**response.data[0])
+        return None
+
+    async def get_post_by_slug(self, slug: str) -> Optional[PostResponse]:
+        """
+        Retrieve a post by slug
+
+        Args:
+            slug: URL slug of the post
+
+        Returns:
+            PostResponse or None if not found
+        """
+        self._check_connection()
+
+        response = self.client.table("posts").select("*").eq("slug", slug).execute()
+
+        if response.data:
+            return PostResponse(**response.data[0])
+        return None
+
+    async def get_all_posts(
+        self, status: Optional[PostStatus] = None, page: int = 1, page_size: int = 10
+    ) -> Dict:
+        """
+        Retrieve paginated list of posts
+
+        Args:
+            status: Filter by status (optional)
+            page: Page number (1-indexed)
+            page_size: Number of posts per page
+
+        Returns:
+            Dict with posts and pagination info
+        """
+        self._check_connection()
+
+        query = self.client.table("posts").select("*")
+
+        # Apply status filter if provided
+        if status:
+            query = query.eq("status", status.value)
+
+        # Get total count
+        count_response = query.execute()
+        total = len(count_response.data)
+
+        # Calculate offset
+        offset = (page - 1) * page_size
+
+        # Apply ordering and pagination
+        response = (
+            query.order("created_at", desc=True)
+            .range(offset, offset + page_size - 1)
+            .execute()
+        )
+
+        posts = [PostResponse(**item) for item in response.data]
+        total_pages = (total + page_size - 1) // page_size
+
+        return {
+            "items": posts,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages,
+        }
+
+    async def update_post(self, post_id: str, post_data: PostUpdate) -> PostResponse:
+        """
+        Update a blog post
+
+        Args:
+            post_id: UUID of the post
+            post_data: PostUpdate model with new data
+
+        Returns:
+            PostResponse: Updated post data
+        """
+        self._check_connection()
+
+        # Build update payload (only include non-None values)
+        payload = {}
+        for field, value in post_data.dict(exclude_unset=True).items():
+            if value is not None:
+                if isinstance(value, PostStatus):
+                    payload[field] = value.value
+                else:
+                    payload[field] = value
+
+        # If status is being changed to published, set published_at
+        if "status" in payload and payload["status"] == "published":
+            payload["published_at"] = datetime.utcnow().isoformat()
+
+        response = (
+            self.client.table("posts")
+            .update(payload)
+            .eq("id", post_id)
+            .execute()
+        )
+
+        if response.data:
+            logger.info(f"Post updated successfully: {post_id}")
+            return PostResponse(**response.data[0])
+        else:
+            raise Exception(f"Failed to update post: {post_id}")
+
+    async def delete_post(self, post_id: str) -> bool:
+        """
+        Delete a blog post
+
+        Args:
+            post_id: UUID of the post
+
+        Returns:
+            bool: True if deletion successful
+        """
+        self._check_connection()
+
+        response = self.client.table("posts").delete().eq("id", post_id).execute()
+
+        if response:
+            logger.info(f"Post deleted successfully: {post_id}")
+            return True
+        else:
+            raise Exception(f"Failed to delete post: {post_id}")
+
+    async def publish_post(self, post_id: str) -> PostResponse:
+        """
+        Publish a draft post
+
+        Args:
+            post_id: UUID of the post
+
+        Returns:
+            PostResponse: Updated post data
+        """
+        update_data = PostUpdate(
+            status=PostStatus.PUBLISHED,
+        )
+        return await self.update_post(post_id, update_data)
+
+    async def search_posts(self, query: str) -> List[PostResponse]:
+        """
+        Search posts by title or content
+
+        Args:
+            query: Search query string
+
+        Returns:
+            List of matching posts
+        """
+        self._check_connection()
+
+        # Supabase full-text search - searches both Turkish and English titles/content
+        response = (
+            self.client.table("posts")
+            .select("*")
+            .or_(
+                f"title_tr.ilike.%{query}%,content_tr.ilike.%{query}%,"
+                f"title_en.ilike.%{query}%,content_en.ilike.%{query}%"
+            )
+            .eq("status", "published")
+            .execute()
+        )
+
+        return [PostResponse(**item) for item in response.data]
+
+    async def increment_view_count(self, post_id: str) -> int:
+        """
+        Increment view count for a post
+
+        Args:
+            post_id: UUID of the post
+
+        Returns:
+            Updated view count
+        """
+        self._check_connection()
+
+        # Get current count
+        post = await self.get_post_by_id(post_id)
+        if not post:
+            raise ValueError(f"Post not found: {post_id}")
+
+        new_count = post.view_count + 1
+
+        response = (
+            self.client.table("posts")
+            .update({"view_count": new_count})
+            .eq("id", post_id)
+            .execute()
+        )
+
+        if response.data:
+            return response.data[0]["view_count"]
+        else:
+            raise Exception(f"Failed to update view count: {post_id}")
+
+    async def get_categories(self) -> List[Dict]:
+        """Get all categories"""
+        self._check_connection()
+        try:
+            response = self.client.table("categories").select("*").execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"Error fetching categories: {str(e)}")
+            return []
+
+    async def create_category(self, category_data) -> Dict:
+        """Create a new category"""
+        self._check_connection()
+        try:
+            response = (
+                self.client.table("categories")
+                .insert({
+                    "name": category_data.name,
+                    "slug": category_data.slug,
+                    "description": category_data.description or "",
+                })
+                .execute()
+            )
+            if response.data:
+                return response.data[0]
+            else:
+                raise Exception("Failed to create category")
+        except Exception as e:
+            logger.error(f"Error creating category: {str(e)}")
+            raise
+
+    async def delete_category(self, category_id: str) -> bool:
+        """Delete a category"""
+        self._check_connection()
+        try:
+            response = (
+                self.client.table("categories")
+                .delete()
+                .eq("id", category_id)
+                .execute()
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting category: {str(e)}")
+            raise
+
+    async def upload_image(self, upload_file) -> str:
+        """
+        Upload an image to Supabase storage
+
+        Args:
+            upload_file: FastAPI UploadFile object
+
+        Returns:
+            str: Public URL of the uploaded image
+        """
+        self._check_connection()
+        try:
+            import uuid
+
+            # Generate unique filename
+            file_ext = os.path.splitext(upload_file.filename)[1]
+            if not file_ext:
+                file_ext = ".jpg"
+            unique_name = f"blog_{''.join(str(uuid.uuid4()).split('-'))[:12]}{file_ext}"
+
+            # Read file content
+            contents = await upload_file.read()
+
+            # Upload to Supabase storage
+            path = f"blog_images/{unique_name}"
+            content_type = upload_file.content_type or "application/octet-stream"
+
+            try:
+                self.client.storage.from_(self.blog_images_bucket).upload(
+                    path=path,
+                    file=contents,
+                    file_options={"content-type": content_type},
+                )
+            except Exception as upload_err:
+                err_text = str(upload_err)
+                # If bucket does not exist yet, create it and retry once.
+                if "Bucket not found" in err_text or "404" in err_text:
+                    logger.warning(
+                        f"Storage bucket '{self.blog_images_bucket}' not found. Attempting to create it."
+                    )
+                    self._ensure_images_bucket_exists()
+                    self.client.storage.from_(self.blog_images_bucket).upload(
+                        path=path,
+                        file=contents,
+                        file_options={"content-type": content_type},
+                    )
+                else:
+                    raise
+
+            # Get public URL
+            public_url = self.client.storage.from_(self.blog_images_bucket).get_public_url(path)
+            logger.info(f"Image uploaded successfully: {public_url}")
+            return public_url
+
+        except Exception as e:
+            logger.error(f"Error uploading image: {str(e)}")
+            raise Exception(f"Failed to upload image: {str(e)}")
+
+    def _ensure_images_bucket_exists(self) -> None:
+        """Create the blog images bucket if it does not exist."""
+        self._check_connection()
+        try:
+            # Newer supabase-py versions
+            self.client.storage.create_bucket(
+                self.blog_images_bucket,
+                options={"public": True},
+            )
+            logger.info(f"Created storage bucket: {self.blog_images_bucket}")
+            return
+        except TypeError:
+            # Older supabase-py versions may accept a different signature.
+            self.client.storage.create_bucket(self.blog_images_bucket, {"public": True})
+            logger.info(f"Created storage bucket: {self.blog_images_bucket}")
+            return
+        except Exception as e:
+            # If another request created the bucket concurrently, continue.
+            err_text = str(e).lower()
+            if "already exists" in err_text or "duplicate" in err_text or "409" in err_text:
+                logger.info(f"Storage bucket already exists: {self.blog_images_bucket}")
+                return
+            raise
+
+
+# Singleton instance
+_blog_service: Optional[BlogDatabaseService] = None
+
+
+def get_blog_service() -> BlogDatabaseService:
+    """Get or create blog database service instance"""
+    global _blog_service
+    if _blog_service is None:
+        _blog_service = BlogDatabaseService()
+    return _blog_service

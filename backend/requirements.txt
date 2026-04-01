@@ -5,6 +5,14 @@ pydantic>=2.6.0
 jsonschema>=4.21.0
 python-dotenv>=1.0.0
 
+# Database & Supabase
+supabase>=2.1.0
+python-dateutil>=2.8.2
+
+# Blog system
+markdown>=3.5.2
+python-slugify>=8.0.1
+
 # AI/ML — for heavyweight agents
 torch>=2.2.0
 openai>=1.12.0

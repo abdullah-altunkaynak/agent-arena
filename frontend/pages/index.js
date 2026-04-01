@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Cpu, Zap, Bot, ChevronRight, Shield, GitBranch, Activity, ArrowRight, Terminal as TermIcon } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Button from "../components/Button";
 import Card from "../components/Card";
@@ -132,6 +133,12 @@ export default function Home() {
                   Browse Agents
                 </Button>
               </Link>
+                <Link href="/blog">
+                  <Button size="lg" variant="secondary">
+                    <BookOpen size={18} />
+                    Blog
+                  </Button>
+                </Link>
             </motion.div>
           </motion.div>
 
@@ -371,4 +378,5 @@ export default function Home() {
     </>
   );
 }
+
 

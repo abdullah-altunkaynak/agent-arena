@@ -48,3 +48,15 @@ wandb/
 # Internal architecture docs — not for public
 ARCHITECTURE.md
 droplet.txt
+00_START_HERE.md
+BLOG_QUICK_REFERENCE.md
+BLOG_SYSTEM_DOCUMENTATION_INDEX.md
+BLOG_SYSTEM_TECHNICAL_SUMMARY.md
+DELIVERY_SUMMARY.md
+FILE_STRUCTURE_GUIDE.md
+backend/blog/API_DOCS.md
+backend/blog/N8N_INTEGRATION.md
+backend/blog/README.md
+backend/blog/schema.sql
+backend/blog/SETUP.md
+frontend/dev.log

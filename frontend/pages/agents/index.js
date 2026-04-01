@@ -74,13 +74,12 @@ function AgentCard({ agent, delay }) {
       {/* Capabilities */}
       <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[rgba(255,255,255,.04)]">
         {[
-          { icon: Database,  label: "Data",     active: agent.has_data_sample },
-          { icon: Beaker,    label: "Training",  active: agent.has_training },
-          { icon: BookOpen,  label: "Docs",      active: agent.has_logic_explanation },
+          { icon: Database, label: "Data", active: agent.has_data_sample },
+          { icon: Beaker, label: "Training", active: agent.has_training },
+          { icon: BookOpen, label: "Docs", active: agent.has_logic_explanation },
         ].map(({ icon: Icon, label, active }) => (
-          <div key={label} className={`flex items-center gap-1.5 text-xs font-mono px-2 py-1.5 rounded-lg ${
-            active ? "bg-acid-400/8 text-acid-400 border border-acid-400/15" : "bg-steel/50 text-mist border border-transparent"
-          }`}>
+          <div key={label} className={`flex items-center gap-1.5 text-xs font-mono px-2 py-1.5 rounded-lg ${active ? "bg-acid-400/8 text-acid-400 border border-acid-400/15" : "bg-steel/50 text-mist border border-transparent"
+            }`}>
             <Icon size={11} />
             {label}
           </div>
@@ -130,11 +129,10 @@ function AgentCard({ agent, delay }) {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className={`rounded-lg px-4 py-3 text-xs font-mono border ${
-            validation.valid
+          className={`rounded-lg px-4 py-3 text-xs font-mono border ${validation.valid
               ? "bg-acid-400/8 border-acid-400/20 text-acid-400"
               : "bg-rose-500/8 border-rose-500/20 text-rose-400"
-          }`}
+            }`}
         >
           <p className="font-bold mb-1">{validation.valid ? "✓ Valid" : "✗ Issues found"}</p>
           {validation.errors?.map((e, i) => <p key={i} className="text-rose-400">• {e}</p>)}
@@ -154,8 +152,13 @@ export default function Agents() {
   useEffect(() => {
     fetch(`${API_URL}/api/agents/`)
       .then((r) => r.json())
-      .then((data) => { setAgents(data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then((data) => {
+        // API returns an array directly
+        const agentsList = Array.isArray(data) ? data : [];
+        setAgents(agentsList);
+        setLoading(false);
+      })
+      .catch(() => { setAgents([]); setLoading(false); });
   }, []);
 
   const filtered = agents.filter((a) => {
@@ -229,11 +232,10 @@ export default function Agents() {
                 <button
                   key={type}
                   onClick={() => setTypeFilter(type)}
-                  className={`px-4 py-2 rounded-lg text-xs font-mono font-medium transition-all border ${
-                    typeFilter === type
+                  className={`px-4 py-2 rounded-lg text-xs font-mono font-medium transition-all border ${typeFilter === type
                       ? "bg-cyan-400/10 border-cyan-400/30 text-cyan-400"
                       : "bg-forge border-[rgba(255,255,255,.06)] text-wire hover:text-spark hover:border-[rgba(255,255,255,.12)]"
-                  }`}
+                    }`}
                 >
                   {type === "all" ? "All" : type.replace("_", " ")}
                   <span className={`ml-1.5 ${typeFilter === type ? "text-cyan-300" : "text-mist"}`}>({count})</span>
