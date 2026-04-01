@@ -22,7 +22,7 @@ export default function BlogPostPage() {
     const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
 
-    const API_BASE = 'https://agentarena.me/api/v1/blog';
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL + '/api/v1/blog';
 
     // State
     const [post, setPost] = useState(null);
