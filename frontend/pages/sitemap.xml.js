@@ -1,6 +1,15 @@
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me';
 
+function logSitemap(message, details) {
+    if (typeof details === 'undefined') {
+        console.log(`[sitemap] ${message}`);
+        return;
+    }
+
+    console.log(`[sitemap] ${message}`, details);
+}
+
 function escapeXml(value) {
     return String(value)
         .replace(/&/g, '&amp;')
@@ -30,6 +39,8 @@ async function fetchPublishedPosts() {
     let page = 1;
     let totalPages = 1;
 
+    logSitemap('fetchPublishedPosts start', { apiBase: API_BASE });
+
     while (page <= totalPages) {
         const params = new URLSearchParams({
             status: 'published',
@@ -37,16 +48,34 @@ async function fetchPublishedPosts() {
             page_size: '100',
         });
 
-        const res = await fetch(`${API_BASE}/api/v1/blog/posts?${params.toString()}`);
-        if (!res.ok) break;
+        const requestUrl = `${API_BASE}/api/v1/blog/posts?${params.toString()}`;
+        logSitemap('fetching posts page', { page, requestUrl });
+
+        const res = await fetch(requestUrl);
+        logSitemap('response received', { page, ok: res.ok, status: res.status });
+        if (!res.ok) {
+            const errorText = await res.text().catch(() => '');
+            logSitemap('response not ok, stopping', { page, status: res.status, errorText: errorText.slice(0, 300) });
+            break;
+        }
 
         const data = await res.json();
         const items = Array.isArray(data?.items) ? data.items : [];
         allPosts.push(...items);
 
+        logSitemap('page parsed', {
+            page,
+            itemsCount: items.length,
+            totalSoFar: allPosts.length,
+            totalPagesFromApi: data?.total_pages || 1,
+            sampleSlugs: items.slice(0, 5).map((post) => post?.slug).filter(Boolean),
+        });
+
         totalPages = Number(data?.total_pages || 1);
         page += 1;
     }
+
+    logSitemap('fetchPublishedPosts complete', { totalPosts: allPosts.length });
 
     return allPosts;
 }
@@ -77,12 +106,17 @@ export async function getServerSideProps({ res }) {
     const staticPaths = ['/', '/arena', '/agents', '/blog'];
     let posts = [];
 
+    logSitemap('getServerSideProps start', { siteUrl: SITE_URL, apiBase: API_BASE });
+
     try {
         posts = await fetchPublishedPosts();
     } catch (error) {
         // Keep sitemap available with static routes even if API is unreachable.
+        logSitemap('fetchPublishedPosts failed', { message: error?.message || String(error) });
         posts = [];
     }
+
+    logSitemap('sitemap assembly', { staticCount: staticPaths.length, postCount: posts.length });
 
     const xml = buildSitemapXml(staticPaths, posts);
 
