@@ -35,6 +35,7 @@ export default function BlogPage() {
 
     const isDark = true;
     const isEnglish = language === 'en';
+    const normalizeLang = (value) => (value === 'tr' ? 'tr' : 'en');
 
     // i18n strings
     const t = {
@@ -79,10 +80,27 @@ export default function BlogPage() {
     const trans = t[language];
 
     useEffect(() => {
+        if (!router.isReady) return;
+
         setMounted(true);
-        const savedLang = localStorage.getItem('blogLanguage') || 'en';
-        setLanguage(savedLang);
-    }, []);
+        const queryLang = typeof router.query.lang === 'string' ? normalizeLang(router.query.lang) : null;
+        const savedLang = normalizeLang(localStorage.getItem('blogLanguage'));
+        const selectedLang = queryLang || savedLang;
+
+        setLanguage(selectedLang);
+        localStorage.setItem('blogLanguage', selectedLang);
+
+        if (!queryLang) {
+            router.replace(
+                {
+                    pathname: router.pathname,
+                    query: { ...router.query, lang: selectedLang },
+                },
+                undefined,
+                { shallow: true }
+            );
+        }
+    }, [router.isReady, router.query.lang]);
 
     // Fetch posts and categories when component mounts
     useEffect(() => {
@@ -167,11 +185,15 @@ export default function BlogPage() {
         const newLang = language === 'en' ? 'tr' : 'en';
         setLanguage(newLang);
         localStorage.setItem('blogLanguage', newLang);
+        router.replace(
+            {
+                pathname: router.pathname,
+                query: { ...router.query, lang: newLang },
+            },
+            undefined,
+            { shallow: true }
+        );
     };
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     if (!mounted) return null;
 
@@ -182,13 +204,41 @@ export default function BlogPage() {
             ? (cat?.name_en || cat?.name_tr || cat?.name || 'Unnamed')
             : (cat?.name_tr || cat?.name_en || cat?.name || 'Isimsiz');
     const hasCategoryIcon = (cat) => typeof cat?.icon === 'string' && cat.icon.trim().length > 0;
+    const canonicalUrl = `${SITE_URL}/blog`;
+    const hreflangTrUrl = `${SITE_URL}/blog?lang=tr`;
+    const hreflangEnUrl = `${SITE_URL}/blog?lang=en`;
+    const blogBreadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: `${SITE_URL}/`,
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Blog',
+                item: `${SITE_URL}/blog`,
+            },
+        ],
+    };
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
             <Head>
                 <title>{trans.insights} & {trans.articles}</title>
                 <meta name="description" content={trans.subtitle} />
-                <link rel="canonical" href={`${SITE_URL}/blog`} />
+                <link rel="canonical" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="tr" href={hreflangTrUrl} />
+                <link rel="alternate" hrefLang="en" href={hreflangEnUrl} />
+                <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(blogBreadcrumbJsonLd) }}
+                />
             </Head>
             {/* Main Navbar */}
             <Navbar />

@@ -11,11 +11,11 @@
 
 ## P1 - Yüksek Etki
 
-- [ ] Blog detay sayfalarına BlogPosting/Article JSON-LD ekle.
-- [ ] Blog liste ve blog detay sayfalarına BreadcrumbList JSON-LD ekle.
-- [ ] TR/EN sayfalar için hreflang alternatiflerini ekle.
-- [ ] Slug değişiklikleri için URL geçiş politikasını ve 301 yönlendirmelerini tanımla.
-- [ ] Soft-404 davranışını düzelt ve eksik içeriklerde doğru 404 yanıtı verildiğini doğrula.
+- [x] Blog detay sayfalarına BlogPosting/Article JSON-LD ekle.
+- [x] Blog liste ve blog detay sayfalarına BreadcrumbList JSON-LD ekle.
+- [x] TR/EN sayfalar için hreflang alternatiflerini ekle.
+- [x] Slug değişiklikleri için URL geçiş politikasını ve 301 yönlendirmelerini tanımla.
+- [x] Soft-404 davranışını düzelt ve eksik içeriklerde doğru 404 yanıtı verildiğini doğrula.
 
 ## P2 - Optimizasyon
 

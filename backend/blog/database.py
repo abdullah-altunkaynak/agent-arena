@@ -135,6 +135,62 @@ class BlogDatabaseService:
             return PostResponse(**response.data[0])
         return None
 
+    async def get_slug_redirect_target(self, old_slug: str) -> Optional[str]:
+        """Resolve legacy slug to current slug from redirect table."""
+        self._check_connection()
+
+        try:
+            response = (
+                self.client.table("post_slug_redirects")
+                .select("new_slug")
+                .eq("old_slug", (old_slug or "").strip().lower())
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+
+            if response.data:
+                return response.data[0].get("new_slug")
+            return None
+        except Exception as e:
+            # Keep compatibility if the table is not migrated yet.
+            logger.warning(f"Slug redirect lookup unavailable: {str(e)}")
+            return None
+
+    async def record_slug_redirect(self, post_id: str, old_slug: str, new_slug: str) -> None:
+        """Persist a legacy-to-current slug mapping."""
+        self._check_connection()
+
+        normalized_old = (old_slug or "").strip().lower()
+        normalized_new = (new_slug or "").strip().lower()
+        if not normalized_old or not normalized_new or normalized_old == normalized_new:
+            return
+
+        try:
+            existing = (
+                self.client.table("post_slug_redirects")
+                .select("id")
+                .eq("old_slug", normalized_old)
+                .limit(1)
+                .execute()
+            )
+
+            if existing.data:
+                self.client.table("post_slug_redirects").update(
+                    {"new_slug": normalized_new, "post_id": post_id}
+                ).eq("old_slug", normalized_old).execute()
+            else:
+                self.client.table("post_slug_redirects").insert(
+                    {
+                        "post_id": post_id,
+                        "old_slug": normalized_old,
+                        "new_slug": normalized_new,
+                    }
+                ).execute()
+        except Exception as e:
+            # Keep post updates working even if redirects table migration is pending.
+            logger.warning(f"Slug redirect write skipped: {str(e)}")
+
     async def get_all_posts(
         self,
         status: Optional[PostStatus] = None,
@@ -203,6 +259,10 @@ class BlogDatabaseService:
         """
         self._check_connection()
 
+        existing_post = await self.get_post_by_id(post_id)
+        if not existing_post:
+            raise Exception(f"Post not found: {post_id}")
+
         # Build update payload (only include non-None values)
         payload = {}
         for field, value in post_data.dict(exclude_unset=True).items():
@@ -224,6 +284,12 @@ class BlogDatabaseService:
         )
 
         if response.data:
+            if "slug" in payload:
+                await self.record_slug_redirect(
+                    post_id=post_id,
+                    old_slug=existing_post.slug,
+                    new_slug=payload["slug"],
+                )
             logger.info(f"Post updated successfully: {post_id}")
             return PostResponse(**response.data[0])
         else:

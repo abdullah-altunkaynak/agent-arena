@@ -119,6 +119,13 @@ class PostListResponse(BaseModel):
     total_pages: int
 
 
+class SlugResolutionResponse(BaseModel):
+    """Response for current/legacy slug resolution."""
+    found: bool
+    redirect_to: Optional[str] = None
+    post_id: Optional[str] = None
+
+
 # ============================================================================
 # VIEW TRACKING MODELS
 # ============================================================================

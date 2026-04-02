@@ -17,13 +17,15 @@ import {
 import ReactMarkdown from 'react-markdown';
 import Navbar from '../../components/Navbar';
 
+const BLOG_API_BASE = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/v1/blog`;
+
 export default function BlogPostPage() {
     const router = useRouter();
     const { slug } = router.query;
     const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL + '/api/v1/blog';
+    const API_BASE = BLOG_API_BASE;
     const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
 
     // State
@@ -35,13 +37,30 @@ export default function BlogPostPage() {
 
     const isDark = true;
     const isEnglish = language === 'en';
+    const normalizeLang = (value) => (value === 'tr' ? 'tr' : 'en');
 
     useEffect(() => {
+        if (!router.isReady) return;
+
         setMounted(true);
-        // Load language from localStorage
-        const savedLang = localStorage.getItem('blogLanguage') || 'en';
-        setLanguage(savedLang);
-    }, []);
+        const queryLang = typeof router.query.lang === 'string' ? normalizeLang(router.query.lang) : null;
+        const savedLang = normalizeLang(localStorage.getItem('blogLanguage'));
+        const selectedLang = queryLang || savedLang;
+
+        setLanguage(selectedLang);
+        localStorage.setItem('blogLanguage', selectedLang);
+
+        if (!queryLang) {
+            router.replace(
+                {
+                    pathname: router.pathname,
+                    query: { ...router.query, lang: selectedLang },
+                },
+                undefined,
+                { shallow: true }
+            );
+        }
+    }, [router.isReady, router.query.lang]);
 
     // Fetch post
     useEffect(() => {
@@ -139,8 +158,59 @@ export default function BlogPostPage() {
     const seoTitle = truncateText(`${rawTitle} | Agent Arena Blog`, 60);
     const seoDescription = truncateText(rawDescription || rawTitle, 160);
     const canonicalUrl = `${SITE_URL}/blog/${slug}`;
+    const hreflangTrUrl = `${SITE_URL}/blog/${slug}?lang=tr`;
+    const hreflangEnUrl = `${SITE_URL}/blog/${slug}?lang=en`;
     const defaultOgImage = process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE || `${SITE_URL}/og-default.png`;
     const seoImage = post.featured_image_url || defaultOgImage;
+    const publishedAt = post.published_at || post.created_at || new Date().toISOString();
+    const modifiedAt = post.updated_at || publishedAt;
+    const articleJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: rawTitle,
+        description: seoDescription,
+        image: [seoImage],
+        mainEntityOfPage: canonicalUrl,
+        datePublished: publishedAt,
+        dateModified: modifiedAt,
+        inLanguage: isEnglish ? 'en' : 'tr',
+        author: {
+            '@type': 'Organization',
+            name: 'Agent Arena',
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'Agent Arena',
+            logo: {
+                '@type': 'ImageObject',
+                url: `${SITE_URL}/logo.png`,
+            },
+        },
+    };
+    const blogPostBreadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: `${SITE_URL}/`,
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Blog',
+                item: `${SITE_URL}/blog`,
+            },
+            {
+                '@type': 'ListItem',
+                position: 3,
+                name: rawTitle,
+                item: canonicalUrl,
+            },
+        ],
+    };
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
@@ -148,6 +218,9 @@ export default function BlogPostPage() {
                 <title>{seoTitle}</title>
                 <meta name="description" content={seoDescription} />
                 <link rel="canonical" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="tr" href={hreflangTrUrl} />
+                <link rel="alternate" hrefLang="en" href={hreflangEnUrl} />
+                <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
 
                 <meta property="og:type" content="article" />
                 <meta property="og:site_name" content="Agent Arena" />
@@ -160,6 +233,15 @@ export default function BlogPostPage() {
                 <meta name="twitter:title" content={seoTitle} />
                 <meta name="twitter:description" content={seoDescription} />
                 <meta name="twitter:image" content={seoImage} />
+
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+                />
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostBreadcrumbJsonLd) }}
+                />
             </Head>
             {/* Main Navbar */}
             <Navbar />
@@ -183,6 +265,14 @@ export default function BlogPostPage() {
                                 onClick={() => {
                                     setLanguage('en');
                                     localStorage.setItem('blogLanguage', 'en');
+                                    router.replace(
+                                        {
+                                            pathname: router.pathname,
+                                            query: { ...router.query, lang: 'en' },
+                                        },
+                                        undefined,
+                                        { shallow: true }
+                                    );
                                 }}
                                 className={`px-2.5 py-1.5 rounded text-xs font-bold transition ${language === 'en'
                                     ? isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-blue-100 text-blue-700'
@@ -195,6 +285,14 @@ export default function BlogPostPage() {
                                 onClick={() => {
                                     setLanguage('tr');
                                     localStorage.setItem('blogLanguage', 'tr');
+                                    router.replace(
+                                        {
+                                            pathname: router.pathname,
+                                            query: { ...router.query, lang: 'tr' },
+                                        },
+                                        undefined,
+                                        { shallow: true }
+                                    );
                                 }}
                                 className={`px-2.5 py-1.5 rounded text-xs font-bold transition ${language === 'tr'
                                     ? isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-blue-100 text-blue-700'
@@ -442,4 +540,43 @@ export default function BlogPostPage() {
             </div>
         </div>
     );
+}
+
+export async function getServerSideProps(context) {
+    const rawSlug = context?.params?.slug;
+    const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug;
+
+    if (!slug) {
+        return { props: {} };
+    }
+
+    try {
+        const response = await fetch(
+            `${BLOG_API_BASE}/posts/resolve-slug/${encodeURIComponent(slug)}`
+        );
+
+        if (!response.ok) {
+            return { props: {} };
+        }
+
+        const resolved = await response.json();
+        if (!resolved?.found) {
+            return { notFound: true };
+        }
+
+        if (resolved?.found && resolved?.redirect_to && resolved.redirect_to !== slug) {
+            const lang = context?.query?.lang;
+            const langQuery = typeof lang === 'string' ? `?lang=${encodeURIComponent(lang)}` : '';
+            return {
+                redirect: {
+                    destination: `/blog/${encodeURIComponent(resolved.redirect_to)}${langQuery}`,
+                    permanent: true,
+                },
+            };
+        }
+    } catch (error) {
+        // Keep page render resilient if API is temporarily unavailable.
+    }
+
+    return { props: {} };
 }

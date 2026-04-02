@@ -21,6 +21,7 @@ from .models import (
     PostStatus,
     N8NWebhookPayload,
     BulkOperationResponse,
+    SlugResolutionResponse,
     CategoryBase,
     CategoryResponse,
 )
@@ -224,6 +225,35 @@ async def get_posts(
     except Exception as e:
         logger.error(f"Error fetching posts: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch posts: {str(e)}")
+
+
+@router.get(
+    "/posts/resolve-slug/{slug}",
+    response_model=SlugResolutionResponse,
+    summary="Resolve current or legacy slug",
+    tags=["Blog Posts"],
+)
+async def resolve_slug(slug: str) -> SlugResolutionResponse:
+    """Resolve slug to current canonical slug for redirect workflows."""
+    try:
+        service = get_blog_service()
+        post = await service.get_post_by_slug(slug)
+        if post:
+            return SlugResolutionResponse(found=True, redirect_to=post.slug, post_id=post.id)
+
+        redirect_to = await service.get_slug_redirect_target(slug)
+        if redirect_to:
+            target_post = await service.get_post_by_slug(redirect_to)
+            return SlugResolutionResponse(
+                found=bool(target_post),
+                redirect_to=redirect_to,
+                post_id=target_post.id if target_post else None,
+            )
+
+        return SlugResolutionResponse(found=False)
+    except Exception as e:
+        logger.error(f"Error resolving slug '{slug}': {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to resolve slug: {str(e)}")
 
 
 @router.get(
