@@ -167,7 +167,7 @@ export async function getServerSideProps({ res, query }) {
     );
 
     res.setHeader('Content-Type', 'text/xml; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=86400');
     if (debugEnabled) {
         res.setHeader('X-Sitemap-Debug', `siteUrl=${SITE_URL};apiBase=${API_BASE};postCount=${posts.length}`);
     }

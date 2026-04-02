@@ -33,9 +33,13 @@ class CategoryBase(BaseModel):
     @classmethod
     def validate_slug(cls, v):
         """Ensure slug is lowercase and contains only valid characters"""
+        if v is None:
+            raise ValueError("Slug is required")
+
+        v = str(v).strip().lower()
         if not all(c.isalnum() or c in '-_' for c in v):
             raise ValueError("Slug can only contain alphanumeric characters, hyphens, and underscores")
-        return v.lower()
+        return v
 
 
 class CategoryCreate(CategoryBase):
@@ -73,9 +77,13 @@ class PostBase(BaseModel):
     @classmethod
     def validate_slug(cls, v):
         """Ensure slug is lowercase and contains only valid characters"""
+        if v is None:
+            raise ValueError("Slug is required")
+
+        v = str(v).strip().lower()
         if not all(c.isalnum() or c in '-_' for c in v):
             raise ValueError("Slug can only contain alphanumeric characters, hyphens, and underscores")
-        return v.lower()
+        return v
 
 
 class PostCreate(PostBase):
