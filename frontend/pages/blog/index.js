@@ -21,7 +21,7 @@ export default function BlogPage() {
     const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
     const API_BASE = process.env.NEXT_PUBLIC_API_URL + '/api/v1/blog';
-    const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
+    const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
 
     const [featuredPost, setFeaturedPost] = useState(null);
     const [posts, setPosts] = useState([]);
