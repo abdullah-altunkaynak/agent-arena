@@ -80,7 +80,17 @@ async function fetchPublishedPosts() {
     return allPosts;
 }
 
-function buildSitemapXml(staticPaths, posts) {
+function buildStaticUrls(staticPaths) {
+    return staticPaths.map((path) => `${SITE_URL}${path}`);
+}
+
+function buildPostUrls(posts) {
+    return posts
+        .filter((post) => post?.slug)
+        .map((post) => `${SITE_URL}/blog/${post.slug}`);
+}
+
+function buildSitemapXml(staticPaths, posts, debugInfo = null) {
     const now = new Date().toISOString();
     const staticEntries = staticPaths.map((path) =>
         buildUrlEntry(`${SITE_URL}${path}`, now, path === '/' ? '1.0' : '0.8', 'weekly')
@@ -93,8 +103,16 @@ function buildSitemapXml(staticPaths, posts) {
             return buildUrlEntry(`${SITE_URL}/blog/${post.slug}`, updatedAt, '0.8', 'weekly');
         });
 
+    const debugComments = debugInfo
+        ? [
+            `<!-- sitemap-debug siteUrl=${escapeXml(debugInfo.siteUrl)} apiBase=${escapeXml(debugInfo.apiBase)} staticCount=${escapeXml(debugInfo.staticCount)} postCount=${escapeXml(debugInfo.postCount)} -->`,
+            `<!-- sitemap-debug requestCount=${escapeXml(debugInfo.requestCount)} -->`,
+        ]
+        : [];
+
     return [
         '<?xml version="1.0" encoding="UTF-8"?>',
+        ...debugComments,
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
         ...staticEntries,
         ...postEntries,
@@ -102,11 +120,18 @@ function buildSitemapXml(staticPaths, posts) {
     ].join('');
 }
 
-export async function getServerSideProps({ res }) {
+export async function getServerSideProps({ res, query }) {
     const staticPaths = ['/', '/arena', '/agents', '/blog'];
     let posts = [];
+    const debugEnabled = query?.debug === '1' || query?.debug === 'true';
+    const staticUrls = buildStaticUrls(staticPaths);
 
-    logSitemap('getServerSideProps start', { siteUrl: SITE_URL, apiBase: API_BASE });
+    logSitemap('getServerSideProps start', {
+        siteUrl: SITE_URL,
+        apiUrl: API_BASE,
+        sitemapUrl: `${SITE_URL}/sitemap.xml`,
+        staticUrls,
+    });
 
     try {
         posts = await fetchPublishedPosts();
@@ -116,12 +141,36 @@ export async function getServerSideProps({ res }) {
         posts = [];
     }
 
-    logSitemap('sitemap assembly', { staticCount: staticPaths.length, postCount: posts.length });
+    const postUrls = buildPostUrls(posts);
 
-    const xml = buildSitemapXml(staticPaths, posts);
+    logSitemap('sitemap assembly', {
+        staticCount: staticPaths.length,
+        postCount: posts.length,
+        postUrls,
+    });
+
+    const xml = buildSitemapXml(
+        staticPaths,
+        posts,
+        debugEnabled
+            ? {
+                siteUrl: SITE_URL,
+                apiBase: API_BASE,
+                sitemapUrl: `${SITE_URL}/sitemap.xml`,
+                staticUrls,
+                postUrls,
+                staticCount: staticPaths.length,
+                postCount: posts.length,
+                requestCount: posts.length > 0 ? 1 : 0,
+            }
+            : null
+    );
 
     res.setHeader('Content-Type', 'text/xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    if (debugEnabled) {
+        res.setHeader('X-Sitemap-Debug', `siteUrl=${SITE_URL};apiBase=${API_BASE};postCount=${posts.length}`);
+    }
     res.write(xml);
     res.end();
 
