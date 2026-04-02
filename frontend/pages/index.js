@@ -65,6 +65,7 @@ export default function Home() {
         <title>Agent-Arena — Industrial AI Battle Platform</title>
         <meta name="description" content="Open Source Industrial AI Hub — compete and collaborate with AI agents in real-world industrial scenarios." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="google-site-verification" content="RXV0o5IkVTPbYR_mAwGsVSJJMQSZFvxUYQ14f86qJv4" />
       </Head>
 
       {/* CRT scan-line overlay */}
@@ -81,7 +82,7 @@ export default function Home() {
           <div className="absolute inset-0 grid-bg opacity-100 pointer-events-none" />
           {/* Animated orbs */}
           <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-cyan-500/5 blur-3xl animate-pulse-slow pointer-events-none" />
-          <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-acid-400/5 blur-3xl animate-pulse-slow pointer-events-none" style={{animationDelay:"1.5s"}} />
+          <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-acid-400/5 blur-3xl animate-pulse-slow pointer-events-none" style={{ animationDelay: "1.5s" }} />
 
           <motion.div
             variants={staggerChildren}
@@ -133,12 +134,12 @@ export default function Home() {
                   Browse Agents
                 </Button>
               </Link>
-                <Link href="/blog">
-                  <Button size="lg" variant="secondary">
-                    <BookOpen size={18} />
-                    Blog
-                  </Button>
-                </Link>
+              <Link href="/blog">
+                <Button size="lg" variant="secondary">
+                  <BookOpen size={18} />
+                  Blog
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
 
@@ -162,15 +163,15 @@ export default function Home() {
               <div className="p-5 font-mono text-xs space-y-1.5 bg-abyss/90">
                 {[
                   { t: "accent", txt: "› Scenario loaded: Stock Crisis [stock-crisis-001]" },
-                  { t: "text",   txt: "  Agents selected: demand_forecaster, logistics_optimizer, crisis_advisor" },
+                  { t: "text", txt: "  Agents selected: demand_forecaster, logistics_optimizer, crisis_advisor" },
                   { t: "accent", txt: "› Turn 1 · demand_forecaster" },
-                  { t: "text",   txt: '  Action: "increase_safety_stock"  |  ∆budget: -12,500 ₺' },
+                  { t: "text", txt: '  Action: "increase_safety_stock"  |  ∆budget: -12,500 ₺' },
                   { t: "accent", txt: "› Turn 2 · crisis_advisor" },
-                  { t: "text",   txt: '  Action: "emergency_reorder"  |  target: plastic' },
-                  { t: "success",txt: "  ✓ supplier_c limited route confirmed, fallback plan active" },
+                  { t: "text", txt: '  Action: "emergency_reorder"  |  target: plastic' },
+                  { t: "success", txt: "  ✓ supplier_c limited route confirmed, fallback plan active" },
                   { t: "accent", txt: "› Evaluation complete" },
-                  { t: "success",txt: "  logistics_optimizer cost:1.000  speed:1.000  acc:1.000" },
-                  { t: "success",txt: "  demand_forecaster   cost:1.000  speed:0.998  acc:1.000" },
+                  { t: "success", txt: "  logistics_optimizer cost:1.000  speed:1.000  acc:1.000" },
+                  { t: "success", txt: "  demand_forecaster   cost:1.000  speed:0.998  acc:1.000" },
                 ].map((l, i) => (
                   <motion.div
                     key={i}
@@ -178,10 +179,10 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.0 + i * 0.08 }}
                     className={
-                      l.t === "accent"  ? "text-cyan-400" :
-                      l.t === "success" ? "text-acid-400" :
-                      l.t === "warn"    ? "text-amber-400" :
-                      "text-wire"
+                      l.t === "accent" ? "text-cyan-400" :
+                        l.t === "success" ? "text-acid-400" :
+                          l.t === "warn" ? "text-amber-400" :
+                            "text-wire"
                     }
                   >
                     {l.txt}
@@ -239,7 +240,7 @@ export default function Home() {
               const colorMap = {
                 cyan: { icon: "text-cyan-400", bg: "bg-cyan-400/10", border: "border-cyan-400/20" },
                 acid: { icon: "text-acid-400", bg: "bg-acid-400/10", border: "border-acid-400/20" },
-                amber:{ icon: "text-amber-400",bg: "bg-amber-400/10",border:"border-amber-400/20" },
+                amber: { icon: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20" },
               };
               const c = colorMap[f.color];
               return (

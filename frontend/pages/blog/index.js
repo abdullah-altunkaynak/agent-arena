@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
@@ -20,6 +21,7 @@ export default function BlogPage() {
     const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
     const API_BASE = process.env.NEXT_PUBLIC_API_URL + '/api/v1/blog';
+    const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
 
     const [featuredPost, setFeaturedPost] = useState(null);
     const [posts, setPosts] = useState([]);
@@ -93,8 +95,16 @@ export default function BlogPage() {
         }
     }, [mounted]);
 
+    // Re-fetch posts when category changes
+    useEffect(() => {
+        if (mounted && categories.length > 0) {
+            fetchPosts();
+        }
+    }, [selectedCategory]);
+
     const fetchPosts = async () => {
         try {
+            setLoading(true);
             const params = new URLSearchParams({
                 status: 'published',
                 page: 1,
@@ -175,6 +185,11 @@ export default function BlogPage() {
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+            <Head>
+                <title>{trans.insights} & {trans.articles}</title>
+                <meta name="description" content={trans.subtitle} />
+                <link rel="canonical" href={`${SITE_URL}/blog`} />
+            </Head>
             {/* Main Navbar */}
             <Navbar />
 

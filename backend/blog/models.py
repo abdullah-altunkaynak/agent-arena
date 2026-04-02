@@ -176,6 +176,8 @@ class N8NWebhookPayload(BaseModel):
     featured_image_url: Optional[str] = None
     author: Optional[str] = None
     category_id: Optional[str] = None
+    category_name_tr: Optional[str] = None
+    category_name: Optional[str] = None
     status: PostStatus = Field(default=PostStatus.DRAFT)
     auto_publish: Optional[bool] = Field(default=False, description="Auto-publish after creation")
     metadata: Optional[dict] = None

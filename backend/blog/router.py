@@ -96,6 +96,17 @@ async def ingest_post_from_n8n(
     try:
         service = get_blog_service()
 
+        resolved_category_id = payload.category_id
+        incoming_category_name = (payload.category_name_tr or payload.category_name or "").strip()
+        if not resolved_category_id and incoming_category_name:
+            resolved_category_id = await service.get_or_create_category_id_by_name_tr(
+                incoming_category_name
+            )
+            if not resolved_category_id:
+                logger.warning(
+                    f"Category resolve/create failed for name_tr='{incoming_category_name}'. Post will be saved without category_id."
+                )
+
         # Create post data
         post_create = PostCreate(
             title_tr=payload.title_tr,
@@ -106,6 +117,7 @@ async def ingest_post_from_n8n(
             status=payload.status,
             excerpt_tr=payload.excerpt_tr,
             excerpt_en=payload.excerpt_en,
+            category_id=resolved_category_id,
             featured_image_url=payload.featured_image_url,
         )
 
@@ -195,13 +207,19 @@ async def create_post(
 )
 async def get_posts(
     status: Optional[PostStatus] = Query(None, description="Filter by status"),
+    category_id: Optional[str] = Query(None, description="Filter by category UUID"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
 ) -> PostListResponse:
     """Get all posts with optional filtering and pagination"""
     try:
         service = get_blog_service()
-        result = await service.get_all_posts(status=status, page=page, page_size=page_size)
+        result = await service.get_all_posts(
+            status=status,
+            category_id=category_id,
+            page=page,
+            page_size=page_size,
+        )
         return PostListResponse(**result)
     except Exception as e:
         logger.error(f"Error fetching posts: {str(e)}")

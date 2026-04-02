@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import {
@@ -23,10 +24,12 @@ export default function BlogPostPage() {
     const [language, setLanguage] = useState('en');
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL + '/api/v1/blog';
+    const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
 
     // State
     const [post, setPost] = useState(null);
     const [relatedPosts, setRelatedPosts] = useState([]);
+    const [popularPosts, setPopularPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -66,6 +69,16 @@ export default function BlogPostPage() {
                         relatedData.items.filter((p) => p.id !== postData.id).slice(0, 3)
                     );
                 }
+
+                // Fetch popular posts (top 5 by view count)
+                const popularResponse = await fetch(
+                    `${API_BASE}/posts?status=published&page_size=10`
+                );
+                const popularData = await popularResponse.json();
+                const sorted = (popularData.items || [])
+                    .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+                    .slice(0, 5);
+                setPopularPosts(sorted);
             } catch (err) {
                 console.error('Error fetching post:', err);
                 setError(err.message);
@@ -100,11 +113,54 @@ export default function BlogPostPage() {
         );
     }
 
+    const stripMarkdown = (text) => {
+        return String(text || '')
+            .replace(/```[\s\S]*?```/g, ' ')
+            .replace(/`[^`]*`/g, ' ')
+            .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+            .replace(/\[[^\]]*\]\([^)]*\)/g, ' ')
+            .replace(/[>#*_~\-|]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+
+    const truncateText = (text, maxLen) => {
+        const clean = String(text || '').trim();
+        if (clean.length <= maxLen) return clean;
+        return `${clean.slice(0, maxLen - 1).trim()}...`;
+    };
+
     const getPostTitle = () => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostContent = () => isEnglish ? (post.content_en || post.content_tr) : (post.content_tr || post.content_en);
+    const getPostExcerpt = () => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
+
+    const rawTitle = getPostTitle() || 'Blog Post';
+    const rawDescription = getPostExcerpt() || stripMarkdown(getPostContent());
+    const seoTitle = truncateText(`${rawTitle} | Agent Arena Blog`, 60);
+    const seoDescription = truncateText(rawDescription || rawTitle, 160);
+    const canonicalUrl = `${SITE_URL}/blog/${slug}`;
+    const defaultOgImage = process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE || `${SITE_URL}/og-default.png`;
+    const seoImage = post.featured_image_url || defaultOgImage;
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+            <Head>
+                <title>{seoTitle}</title>
+                <meta name="description" content={seoDescription} />
+                <link rel="canonical" href={canonicalUrl} />
+
+                <meta property="og:type" content="article" />
+                <meta property="og:site_name" content="Agent Arena" />
+                <meta property="og:url" content={canonicalUrl} />
+                <meta property="og:title" content={seoTitle} />
+                <meta property="og:description" content={seoDescription} />
+                <meta property="og:image" content={seoImage} />
+
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={seoTitle} />
+                <meta name="twitter:description" content={seoDescription} />
+                <meta name="twitter:image" content={seoImage} />
+            </Head>
             {/* Main Navbar */}
             <Navbar />
 
@@ -303,30 +359,59 @@ export default function BlogPostPage() {
 
                         {/* Sidebar - 1/3 width */}
                         <div className="lg:col-span-1">
-                            {/* Status/Info Box */}
-                            <div className={`p-6 rounded-lg mb-8 ${isDark ? 'bg-slate-800' : 'bg-slate-50'} sticky top-24`}>
-                                <h4 className={`text-sm font-bold uppercase tracking-wider mb-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
-                                    Article Digest
-                                </h4>
-                                <div
-                                    className="space-y-3 text-sm"
-                                    style={{ color: isDark ? '#cbd5e1' : '#111827' }}
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <span>Reading time</span>
-                                        <span className="font-semibold">{Math.ceil((getPostContent()?.split(' ').length || 0) / 200)} min</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span>Published</span>
-                                        <span className="font-semibold">
-                                            {new Date(post.created_at).toLocaleDateString(isEnglish ? 'en-US' : 'tr-TR')}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span>Views</span>
-                                        <span className="font-semibold">{post.view_count}</span>
+                            <div className="sticky top-24 space-y-8">
+                                {/* Status/Info Box */}
+                                <div className={`p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                                    <h4 className={`text-sm font-bold uppercase tracking-wider mb-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
+                                        Article Digest
+                                    </h4>
+                                    <div
+                                        className="space-y-3 text-sm"
+                                        style={{ color: isDark ? '#cbd5e1' : '#111827' }}
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <span>Reading time</span>
+                                            <span className="font-semibold">{Math.ceil((getPostContent()?.split(' ').length || 0) / 200)} min</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span>Published</span>
+                                            <span className="font-semibold">
+                                                {new Date(post.created_at).toLocaleDateString(isEnglish ? 'en-US' : 'tr-TR')}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span>Views</span>
+                                            <span className="font-semibold">{post.view_count}</span>
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* Popular Posts Widget */}
+                                {popularPosts.length > 0 && (
+                                    <div className={`p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                                        <h4 className={`text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                                            🔥 Popular Now
+                                        </h4>
+                                        <div className="space-y-3">
+                                            {popularPosts.map((popPost, idx) => (
+                                                <Link key={popPost.id} href={`/blog/${popPost.slug}`}>
+                                                    <div className={`p-3 rounded-lg transition cursor-pointer group ${isDark ? 'hover:bg-slate-700' : 'hover:bg-white'}`}>
+                                                        <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-400 group-hover:text-red-400' : 'text-slate-600 group-hover:text-red-600'}`}>
+                                                            #{idx + 1}
+                                                        </h5>
+                                                        <p className={`text-sm font-semibold line-clamp-2 mb-2 ${isDark ? 'text-slate-200 group-hover:text-white' : 'text-slate-900 group-hover:text-slate-950'}`}>
+                                                            {isEnglish ? (popPost.title_en || popPost.title_tr) : (popPost.title_tr || popPost.title_en)}
+                                                        </p>
+                                                        <div className={`flex items-center gap-2 text-xs ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
+                                                            <Eye size={12} />
+                                                            <span>{popPost.view_count} views</span>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Related Posts */}

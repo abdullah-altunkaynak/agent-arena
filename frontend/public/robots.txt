@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Internal/admin areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /blog/create
+Disallow: /preview/
+Disallow: /internal/
+
+# Prevent crawling of common private query patterns
+Disallow: /*?*preview=
+Disallow: /*?*token=
+Disallow: /*?*draft=
+
+Sitemap: /sitemap.xml

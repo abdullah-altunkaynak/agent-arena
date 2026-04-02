@@ -4,6 +4,9 @@ Supabase database operations for blog posts
 """
 
 import os
+import random
+import re
+import unicodedata
 from typing import Optional, List, Dict
 from datetime import datetime
 from logging import getLogger
@@ -16,6 +19,19 @@ from .models import PostCreate, PostUpdate, PostResponse, PostStatus
 load_dotenv()
 
 logger = getLogger(__name__)
+
+DEFAULT_CATEGORY_ICONS = [
+    "🧠", "⚙️", "🚀", "📊", "🔬", "💡", "🛠️", "🌐", "📈", "🤖"
+]
+
+
+def _slugify_text(value: str) -> str:
+    """Create a URL-safe slug from unicode text."""
+    normalized = unicodedata.normalize("NFKD", value or "")
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+    lowered = ascii_text.lower().strip()
+    slug = re.sub(r"[^a-z0-9]+", "-", lowered).strip("-")
+    return slug or "kategori"
 
 
 class BlogDatabaseService:
@@ -69,6 +85,7 @@ class BlogDatabaseService:
             "content_en": post_data.content_en,
             "slug": post_data.slug,
             "status": post_data.status.value,
+            "category_id": post_data.category_id,
             "excerpt_tr": post_data.excerpt_tr,
             "excerpt_en": post_data.excerpt_en,
             "featured_image_url": post_data.featured_image_url,
@@ -119,7 +136,11 @@ class BlogDatabaseService:
         return None
 
     async def get_all_posts(
-        self, status: Optional[PostStatus] = None, page: int = 1, page_size: int = 10
+        self,
+        status: Optional[PostStatus] = None,
+        category_id: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 10,
     ) -> Dict:
         """
         Retrieve paginated list of posts
@@ -139,6 +160,10 @@ class BlogDatabaseService:
         # Apply status filter if provided
         if status:
             query = query.eq("status", status.value)
+
+        # Apply category filter if provided
+        if category_id:
+            query = query.eq("category_id", category_id)
 
         # Get total count
         count_response = query.execute()
@@ -305,6 +330,74 @@ class BlogDatabaseService:
         except Exception as e:
             logger.error(f"Error fetching categories: {str(e)}")
             return []
+
+    async def get_category_id_by_name_tr(self, name_tr: str) -> Optional[str]:
+        """Resolve category UUID by Turkish category name."""
+        self._check_connection()
+        if not name_tr:
+            return None
+
+        target = name_tr.strip().casefold()
+        if not target:
+            return None
+
+        try:
+            response = self.client.table("categories").select("id,name_tr").execute()
+            rows = response.data or []
+            for row in rows:
+                value = (row.get("name_tr") or "").strip().casefold()
+                if value == target:
+                    return row.get("id")
+            return None
+        except Exception as e:
+            logger.error(f"Error resolving category by name_tr: {str(e)}")
+            return None
+
+    async def get_or_create_category_id_by_name_tr(self, name_tr: str) -> Optional[str]:
+        """Resolve category UUID by name_tr, create category if it does not exist."""
+        self._check_connection()
+
+        normalized_name = (name_tr or "").strip()
+        if not normalized_name:
+            return None
+
+        existing_id = await self.get_category_id_by_name_tr(normalized_name)
+        if existing_id:
+            return existing_id
+
+        try:
+            existing_rows = self.client.table("categories").select("slug").execute().data or []
+            existing_slugs = {((row.get("slug") or "").strip().lower()) for row in existing_rows}
+
+            base_slug = _slugify_text(normalized_name)
+            candidate_slug = base_slug
+            suffix = 2
+            while candidate_slug in existing_slugs:
+                candidate_slug = f"{base_slug}-{suffix}"
+                suffix += 1
+
+            icon = random.choice(DEFAULT_CATEGORY_ICONS)
+            payload = {
+                "name_tr": normalized_name,
+                "name_en": normalized_name,
+                "slug": candidate_slug,
+                "description_tr": f"{normalized_name} kategorisindeki yazılar",
+                "description_en": f"Articles in {normalized_name} category",
+                "icon": icon,
+            }
+
+            response = self.client.table("categories").insert(payload).execute()
+            if response.data:
+                created_id = response.data[0].get("id")
+                logger.info(
+                    f"Category auto-created from n8n payload: name_tr='{normalized_name}', id='{created_id}', slug='{candidate_slug}'"
+                )
+                return created_id
+
+            return None
+        except Exception as e:
+            logger.error(f"Error creating category by name_tr: {str(e)}")
+            return None
 
     async def create_category(self, category_data) -> Dict:
         """Create a new category"""
