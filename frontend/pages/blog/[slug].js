@@ -17,7 +17,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import Navbar from '../../components/Navbar';
 
-const BLOG_API_BASE = `${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me'}/api/v1/blog`;
+const BLOG_API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
 
 export default function BlogPostPage() {
     const router = useRouter();
