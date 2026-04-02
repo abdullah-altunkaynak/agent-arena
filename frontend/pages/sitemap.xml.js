@@ -1,5 +1,5 @@
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || SITE_URL;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me';
 
 function escapeXml(value) {
     return String(value)
