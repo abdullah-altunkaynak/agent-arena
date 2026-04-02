@@ -14,7 +14,7 @@ import StatusBadge from "../../components/StatusBadge";
 import Button from "../../components/Button";
 import Terminal from "../../components/Terminal";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.agentarena.me";
 
 const typeIcon = {
   lightweight: Zap,

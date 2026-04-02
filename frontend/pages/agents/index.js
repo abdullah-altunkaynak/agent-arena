@@ -11,7 +11,7 @@ import Card from "../../components/Card";
 import StatusBadge from "../../components/StatusBadge";
 import Button from "../../components/Button";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.agentarena.me";
 const CONTRIBUTING_GUIDE_URL = "https://github.com/abdullah-altunkaynak/agent-arena/blob/main/docs/CONTRIBUTING.md";
 
 const TYPE_LABELS = {
@@ -130,8 +130,8 @@ function AgentCard({ agent, delay }) {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           className={`rounded-lg px-4 py-3 text-xs font-mono border ${validation.valid
-              ? "bg-acid-400/8 border-acid-400/20 text-acid-400"
-              : "bg-rose-500/8 border-rose-500/20 text-rose-400"
+            ? "bg-acid-400/8 border-acid-400/20 text-acid-400"
+            : "bg-rose-500/8 border-rose-500/20 text-rose-400"
             }`}
         >
           <p className="font-bold mb-1">{validation.valid ? "✓ Valid" : "✗ Issues found"}</p>
@@ -233,8 +233,8 @@ export default function Agents() {
                   key={type}
                   onClick={() => setTypeFilter(type)}
                   className={`px-4 py-2 rounded-lg text-xs font-mono font-medium transition-all border ${typeFilter === type
-                      ? "bg-cyan-400/10 border-cyan-400/30 text-cyan-400"
-                      : "bg-forge border-[rgba(255,255,255,.06)] text-wire hover:text-spark hover:border-[rgba(255,255,255,.12)]"
+                    ? "bg-cyan-400/10 border-cyan-400/30 text-cyan-400"
+                    : "bg-forge border-[rgba(255,255,255,.06)] text-wire hover:text-spark hover:border-[rgba(255,255,255,.12)]"
                     }`}
                 >
                   {type === "all" ? "All" : type.replace("_", " ")}

@@ -31,7 +31,7 @@ import MarkdownEditor from '../../components/MarkdownEditor';
 const BlogAdminDashboard = () => {
     const router = useRouter();
     // API Base URL
-    const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/blog`;
+    const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
     const API_KEY = process.env.NEXT_PUBLIC_BLOG_API_KEY;
 
     // State Management

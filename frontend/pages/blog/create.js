@@ -22,7 +22,7 @@ export default function CreatePostPage() {
     const [mounted, setMounted] = useState(false);
     const [theme, setThemeLocal] = useState('dark');
 
-    const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/blog`;
+    const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
 
     // State
     const [formData, setFormData] = useState({

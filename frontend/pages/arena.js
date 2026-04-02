@@ -14,19 +14,19 @@ import StatWidget from "../components/StatWidget";
 import StatusBadge from "../components/StatusBadge";
 import Terminal from "../components/Terminal";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.agentarena.me";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 function buildLog(result) {
   if (!result) return [];
   const lines = [
     { type: "accent", text: `Scenario: ${result.scenario_id}` },
-    { type: "text",   text: `Turns executed: ${result.turns.length}` },
-    { type: "text",   text: "──────────────────────────────────────" },
+    { type: "text", text: `Turns executed: ${result.turns.length}` },
+    { type: "text", text: "──────────────────────────────────────" },
   ];
   result.turns.forEach((t) => {
     lines.push({ type: "accent", text: `Turn ${t.turn} · ${t.agent} [${t.duration_ms}ms]` });
-    lines.push({ type: "text",   text: `  Action: ${t.action}` });
+    lines.push({ type: "text", text: `  Action: ${t.action}` });
     if (t.reasoning) lines.push({ type: "text", text: `  Reason: ${t.reasoning}` });
   });
   lines.push({ type: "text", text: "──────────────────────────────────────" });
@@ -96,7 +96,7 @@ export default function Arena() {
         setAgents(ag);
         if (sc.length) setSelectedScenario(sc[0].id);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const toggleAgent = (slug) => {
@@ -268,11 +268,10 @@ export default function Arena() {
                         <button
                           key={sc.id}
                           onClick={() => setSelectedScenario(sc.id)}
-                          className={`w-full text-left px-5 py-4 rounded-xl border transition-all duration-200 ${
-                            selectedScenario === sc.id
+                          className={`w-full text-left px-5 py-4 rounded-xl border transition-all duration-200 ${selectedScenario === sc.id
                               ? "border-cyan-400/40 bg-cyan-400/8 shadow-neon-cyan"
                               : "border-[rgba(255,255,255,.06)] bg-forge/50 hover:border-[rgba(34,211,238,.15)] hover:bg-forge"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-display font-semibold text-spark text-sm">
@@ -315,11 +314,10 @@ export default function Arena() {
                           <button
                             key={agent.slug}
                             onClick={() => toggleAgent(agent.slug)}
-                            className={`text-left px-4 py-4 rounded-xl border transition-all duration-200 ${
-                              active
+                            className={`text-left px-4 py-4 rounded-xl border transition-all duration-200 ${active
                                 ? "border-cyan-400/40 bg-cyan-400/8"
                                 : "border-[rgba(255,255,255,.06)] bg-forge/50 hover:border-[rgba(34,211,238,.15)]"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center gap-3 mb-2">
                               <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-mono font-bold
