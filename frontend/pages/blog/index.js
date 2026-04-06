@@ -32,6 +32,10 @@ export default function BlogPage() {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedTag, setSelectedTag] = useState('all');
     const [filteredPosts, setFilteredPosts] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalPosts, setTotalPosts] = useState(0);
+    const PAGE_SIZE = 10;
 
     const isDark = true;
     const isEnglish = language === 'en';
@@ -118,15 +122,15 @@ export default function BlogPage() {
         if (mounted && categories.length > 0) {
             fetchPosts();
         }
-    }, [selectedCategory]);
+    }, [selectedCategory, currentPage]);
 
     const fetchPosts = async () => {
         try {
             setLoading(true);
             const params = new URLSearchParams({
                 status: 'published',
-                page: 1,
-                page_size: 12,
+                page: String(currentPage),
+                page_size: String(PAGE_SIZE),
             });
 
             if (selectedCategory !== 'all') {
@@ -136,14 +140,21 @@ export default function BlogPage() {
             const response = await fetch(`${API_BASE}/posts?${params}`);
             const data = await response.json();
             setPosts(data.items || []);
+            setTotalPages(Math.max(data.total_pages || 1, 1));
+            setTotalPosts(data.total || 0);
 
             // Set featured post as first post
             if (data.items && data.items.length > 0) {
                 setFeaturedPost(data.items[0]);
+            } else {
+                setFeaturedPost(null);
             }
         } catch (err) {
             console.error('Error fetching posts:', err);
             setPosts([]);
+            setTotalPages(1);
+            setTotalPosts(0);
+            setFeaturedPost(null);
         } finally {
             setLoading(false);
         }
@@ -379,9 +390,12 @@ export default function BlogPage() {
                         )}
 
                         {/* Category Filter */}
-                        <div className="flex flex-wrap gap-2">
+                        {/*<div className="flex flex-wrap gap-2">
                             <button
-                                onClick={() => setSelectedCategory('all')}
+                                onClick={() => {
+                                    setSelectedCategory('all');
+                                    setCurrentPage(1);
+                                }}
                                 className={`px-4 py-2 rounded-full text-sm font-semibold transition-all border ${selectedCategory === 'all'
                                     ? isDark ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50' : 'bg-blue-100 text-blue-700 border-blue-300'
                                     : isDark ? 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-600' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
@@ -392,7 +406,10 @@ export default function BlogPage() {
                             {categories.map((cat) => (
                                 <button
                                     key={cat.id}
-                                    onClick={() => setSelectedCategory(cat.id)}
+                                    onClick={() => {
+                                        setSelectedCategory(cat.id);
+                                        setCurrentPage(1);
+                                    }}
                                     className={`px-4 py-2 rounded-full text-sm font-semibold transition-all border flex items-center gap-2 ${selectedCategory === cat.id
                                         ? isDark ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50' : 'bg-blue-100 text-blue-700 border-blue-300'
                                         : isDark ? 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-600' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
@@ -406,7 +423,7 @@ export default function BlogPage() {
                                     {getCategoryName(cat)}
                                 </button>
                             ))}
-                        </div>
+                        </div>*/}
 
                         {/* Posts Grid */}
                         {loading ? (
@@ -418,41 +435,64 @@ export default function BlogPage() {
                                 <p className={`text-lg ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>{trans.noArticles}</p>
                             </div>
                         ) : (
-                            <div className="grid gap-6">
-                                {filteredPosts.slice(1).map((post) => (
-                                    <Link key={post.id} href={`/blog/${post.slug}`}>
-                                        <div className={`group rounded-lg overflow-hidden border transition cursor-pointer flex gap-4 ${isDark ? 'bg-slate-800/30 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
-                                            {post.featured_image_url && (
-                                                <div className="relative w-32 h-32 flex-shrink-0 overflow-hidden">
-                                                    <img
-                                                        src={post.featured_image_url}
-                                                        alt={getPostTitle(post)}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                        onError={(e) => { e.target.style.display = 'none'; }}
-                                                    />
-                                                </div>
-                                            )}
-                                            <div className="p-4 flex-1 flex flex-col">
-                                                <h3 className={`text-lg font-bold mb-2 line-clamp-2 group-hover:text-cyan-400 transition ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                                                    {getPostTitle(post)}
-                                                </h3>
-                                                <p className={`text-sm mb-3 line-clamp-2 ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-                                                    {getPostExcerpt(post)}
-                                                </p>
-                                                <div className={`flex items-center justify-between text-xs mt-auto pt-3 border-t ${isDark ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-600'}`}>
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar size={12} />
-                                                        {new Date(post.created_at).toLocaleDateString(isEnglish ? 'en-US' : 'tr-TR')}
+                            <>
+                                <div className="grid gap-6">
+                                    {filteredPosts.slice(1).map((post) => (
+                                        <Link key={post.id} href={`/blog/${post.slug}`}>
+                                            <div className={`group rounded-lg overflow-hidden border transition cursor-pointer flex gap-4 ${isDark ? 'bg-slate-800/30 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
+                                                {post.featured_image_url && (
+                                                    <div className="relative w-32 h-32 flex-shrink-0 overflow-hidden">
+                                                        <img
+                                                            src={post.featured_image_url}
+                                                            alt={getPostTitle(post)}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                                        />
                                                     </div>
-                                                    <div className={`flex items-center gap-1 font-semibold ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
-                                                        <Eye size={12} /> {post.view_count}
+                                                )}
+                                                <div className="p-4 flex-1 flex flex-col">
+                                                    <h3 className={`text-lg font-bold mb-2 line-clamp-2 group-hover:text-cyan-400 transition ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                                                        {getPostTitle(post)}
+                                                    </h3>
+                                                    <p className={`text-sm mb-3 line-clamp-2 ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+                                                        {getPostExcerpt(post)}
+                                                    </p>
+                                                    <div className={`flex items-center justify-between text-xs mt-auto pt-3 border-t ${isDark ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-600'}`}>
+                                                        <div className="flex items-center gap-2">
+                                                            <Calendar size={12} />
+                                                            {new Date(post.created_at).toLocaleDateString(isEnglish ? 'en-US' : 'tr-TR')}
+                                                        </div>
+                                                        <div className={`flex items-center gap-1 font-semibold ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
+                                                            <Eye size={12} /> {post.view_count}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+
+                                {totalPages > 1 && !searchTerm && (
+                                    <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+                                        {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+                                            <button
+                                                key={pageNumber}
+                                                onClick={() => setCurrentPage(pageNumber)}
+                                                className={`min-w-[40px] h-10 px-3 rounded-lg font-semibold border transition ${currentPage === pageNumber
+                                                    ? isDark
+                                                        ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50'
+                                                        : 'bg-blue-100 text-blue-700 border-blue-300'
+                                                    : isDark
+                                                        ? 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-600'
+                                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                                                    }`}
+                                            >
+                                                {pageNumber}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -467,7 +507,10 @@ export default function BlogPage() {
                                 {categories.map((cat) => (
                                     <button
                                         key={cat.id}
-                                        onClick={() => setSelectedCategory(cat.id)}
+                                        onClick={() => {
+                                            setSelectedCategory(cat.id);
+                                            setCurrentPage(1);
+                                        }}
                                         className={`w-full text-left px-3 py-2 rounded-lg transition flex items-center justify-between group ${selectedCategory === cat.id
                                             ? isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-blue-50 text-blue-700'
                                             : isDark ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-800 hover:bg-slate-100'
@@ -491,7 +534,7 @@ export default function BlogPage() {
                             <div className="space-y-3 text-sm">
                                 <div className={`flex justify-between ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                                     <span>Total Articles</span>
-                                    <span className="font-bold">{posts.length}</span>
+                                    <span className="font-bold">{totalPosts}</span>
                                 </div>
                                 <div className={`flex justify-between ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                                     <span>Categories</span>
