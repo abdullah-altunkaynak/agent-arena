@@ -138,8 +138,55 @@ export default function BlogPostPage() {
             .replace(/`[^`]*`/g, ' ')
             .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
             .replace(/\[[^\]]*\]\([^)]*\)/g, ' ')
+            .replace(/<[^>]+>/g, ' ')
             .replace(/[>#*_~\-|]/g, ' ')
             .replace(/\s+/g, ' ')
+            .trim();
+    };
+
+    const sanitizeHtmlContent = (html) => {
+        if (!html) return '';
+
+        return String(html)
+            .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
+            .replace(/\son\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+            .replace(/javascript:/gi, '');
+    };
+
+    const isLikelyHtml = (value) => /<\s*\/?\s*[a-z][^>]*>/i.test(String(value || ''));
+
+    const hasMarkdownSyntax = (value) => {
+        const text = String(value || '');
+        return /(#{1,6}\s)|(^|\s)-\s+|(\d+\.\s)|(```)|(\*\*[^*]+\*\*)/.test(text);
+    };
+
+    const htmlAnchorsToMarkdown = (value) => {
+        if (!value) return '';
+
+        return String(value)
+            .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, label) => {
+                const plainLabel = String(label).replace(/<[^>]+>/g, '').trim() || href;
+                return `[${plainLabel}](${href})`;
+            })
+            .replace(/<br\s*\/?>/gi, '\n');
+    };
+
+    const normalizeMarkdownContent = (value) => {
+        if (!value) return '';
+
+        return String(value)
+            .replace(/\r\n/g, '\n')
+            .replace(/\u00a0/g, ' ')
+            // Headings become valid only when they start at line-start.
+            .replace(/\s(#{1,6}\s)/g, '\n\n$1')
+            // Numbered lists in collapsed text need a line break before each item.
+            .replace(/\s(\d+\.\s)/g, '\n\n$1')
+            // Convert inline "- item" segments into actual markdown lists.
+            .replace(/([:.])\s-\s+/g, '$1\n- ')
+            .replace(/\s-\s(?=[A-Z0-9*])/g, '\n- ')
+            // Avoid excessive blank lines created by normalization.
+            .replace(/\n{3,}/g, '\n\n')
             .trim();
     };
 
@@ -152,6 +199,16 @@ export default function BlogPostPage() {
     const getPostTitle = () => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostContent = () => isEnglish ? (post.content_en || post.content_tr) : (post.content_tr || post.content_en);
     const getPostExcerpt = () => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
+    const getPostContentHtml = () => sanitizeHtmlContent(getPostContent());
+    const getPostExcerptHtml = () => sanitizeHtmlContent(getPostExcerpt());
+    const postContent = getPostContent();
+    const postExcerpt = getPostExcerpt();
+    const postContentForMarkdown = htmlAnchorsToMarkdown(postContent);
+    const postExcerptForMarkdown = htmlAnchorsToMarkdown(postExcerpt);
+    const contentIsHtml = isLikelyHtml(postContent) && !hasMarkdownSyntax(postContentForMarkdown);
+    const excerptIsHtml = isLikelyHtml(postExcerpt) && !hasMarkdownSyntax(postExcerptForMarkdown);
+    const normalizedPostContent = normalizeMarkdownContent(postContentForMarkdown);
+    const normalizedPostExcerpt = normalizeMarkdownContent(postExcerptForMarkdown);
 
     const rawTitle = getPostTitle() || 'Blog Post';
     const rawDescription = getPostExcerpt() || stripMarkdown(getPostContent());
@@ -375,89 +432,34 @@ export default function BlogPostPage() {
 
                             {/* Excerpt */}
                             {(isEnglish ? post.excerpt_en : post.excerpt_tr) && (
-                                <p
-                                    className="text-xl leading-relaxed mb-8"
-                                    style={{ color: isDark ? '#cbd5e1' : '#111827' }}
-                                >
-                                    {isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en)}
-                                </p>
+                                excerptIsHtml ? (
+                                    <div
+                                        className={`prose prose-lg max-w-none mb-8 ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700'} prose-p:my-0 prose-ul:my-2 prose-ol:my-2`}
+                                        dangerouslySetInnerHTML={{ __html: getPostExcerptHtml() }}
+                                    />
+                                ) : (
+                                    <div className={`prose prose-lg max-w-none mb-8 ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700'} prose-p:my-0 prose-ul:my-2 prose-ol:my-2`}>
+                                        <ReactMarkdown>{normalizedPostExcerpt}</ReactMarkdown>
+                                    </div>
+                                )
                             )}
 
                             {/* Content */}
-                            <div className={`prose ${isDark ? 'prose-invert' : 'prose'} max-w-none`}>
-                                <ReactMarkdown
-                                    components={{
-                                        h1: ({ node, ...props }) => (
-                                            <h1
-                                                className="text-3xl font-bold mt-8 mb-4"
-                                                style={{ color: isDark ? '#ffffff' : '#111827' }}
-                                                {...props}
-                                            />
-                                        ),
-                                        h2: ({ node, ...props }) => (
-                                            <h2
-                                                className="text-2xl font-bold mt-6 mb-3"
-                                                style={{ color: isDark ? '#ffffff' : '#111827' }}
-                                                {...props}
-                                            />
-                                        ),
-                                        h3: ({ node, ...props }) => (
-                                            <h3
-                                                className="text-xl font-bold mt-4 mb-2"
-                                                style={{ color: isDark ? '#ffffff' : '#111827' }}
-                                                {...props}
-                                            />
-                                        ),
-                                        p: ({ node, ...props }) => (
-                                            <p
-                                                className="leading-relaxed mb-4"
-                                                style={{ color: isDark ? '#cbd5e1' : '#111827' }}
-                                                {...props}
-                                            />
-                                        ),
-                                        ul: ({ node, ...props }) => (
-                                            <ul
-                                                className="list-disc list-inside mb-4 space-y-2"
-                                                style={{ color: isDark ? '#cbd5e1' : '#111827' }}
-                                                {...props}
-                                            />
-                                        ),
-                                        ol: ({ node, ...props }) => (
-                                            <ol
-                                                className="list-decimal list-inside mb-4 space-y-2"
-                                                style={{ color: isDark ? '#cbd5e1' : '#111827' }}
-                                                {...props}
-                                            />
-                                        ),
-                                        code: ({ node, ...props }) => (
-                                            <code className={`px-2 py-1 rounded text-sm font-mono ${isDark ? 'bg-slate-800 text-cyan-400' : 'bg-slate-100 text-blue-600'}`} {...props} />
-                                        ),
-                                        pre: ({ node, ...props }) => (
-                                            <pre className={`p-4 rounded-lg overflow-x-auto mb-4 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`} {...props} />
-                                        ),
-                                        blockquote: ({ node, ...props }) => (
-                                            <blockquote
-                                                className={`border-l-4 pl-4 italic my-4 ${isDark ? 'border-cyan-500' : 'border-blue-600'}`}
-                                                style={{ color: isDark ? '#94a3b8' : '#1f2937' }}
-                                                {...props}
-                                            />
-                                        ),
-                                        a: ({ node, ...props }) => (
-                                            <a className={isDark ? 'text-cyan-400 hover:text-cyan-300 underline' : 'text-blue-600 hover:text-blue-700 underline'} {...props} />
-                                        ),
-                                        img: ({ node, ...props }) => (
-                                            <img className="w-full rounded-lg my-4" {...props} />
-                                        ),
-                                    }}
-                                >
-                                    {getPostContent()}
-                                </ReactMarkdown>
-                            </div>
+                            {contentIsHtml ? (
+                                <div
+                                    className={`prose max-w-none ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-strong:text-white prose-li:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300 prose-code:text-cyan-300 prose-pre:bg-slate-800 prose-blockquote:border-cyan-500 prose-blockquote:text-slate-400' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-strong:text-slate-900 prose-li:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-code:text-blue-700 prose-pre:bg-slate-100 prose-blockquote:border-blue-600 prose-blockquote:text-slate-700'} prose-img:rounded-lg prose-img:w-full`}
+                                    dangerouslySetInnerHTML={{ __html: getPostContentHtml() }}
+                                />
+                            ) : (
+                                <div className={`prose max-w-none ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-strong:text-white prose-li:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300 prose-code:text-cyan-300 prose-pre:bg-slate-800 prose-blockquote:border-cyan-500 prose-blockquote:text-slate-400' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-strong:text-slate-900 prose-li:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-code:text-blue-700 prose-pre:bg-slate-100 prose-blockquote:border-blue-600 prose-blockquote:text-slate-700'} prose-img:rounded-lg prose-img:w-full`}>
+                                    <ReactMarkdown>{normalizedPostContent}</ReactMarkdown>
+                                </div>
+                            )}
                         </div>
 
                         {/* Sidebar - 1/3 width */}
                         <div className="lg:col-span-1">
-                            <div className="sticky top-24 space-y-8">
+                            <div className="sticky top-24 space-y-8 max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
                                 {/* Status/Info Box */}
                                 <div className={`p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
                                     <h4 className={`text-sm font-bold uppercase tracking-wider mb-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
@@ -510,30 +512,30 @@ export default function BlogPostPage() {
                                         </div>
                                     </div>
                                 )}
-                            </div>
 
-                            {/* Related Posts */}
-                            {relatedPosts.length > 0 && (
-                                <div className={`p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                                    <h4 className={`text-sm font-bold uppercase tracking-wider mb-6 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
-                                        Related Posts
-                                    </h4>
-                                    <div className="space-y-4">
-                                        {relatedPosts.map((relatedPost) => (
-                                            <Link key={relatedPost.id} href={`/blog/${relatedPost.slug}`}>
-                                                <div className={`group cursor-pointer p-4 rounded-lg transition ${isDark ? 'hover:bg-slate-700' : 'hover:bg-white'}`}>
-                                                    <h5 className={`text-sm font-semibold mb-2 line-clamp-2 ${isDark ? 'text-slate-100 group-hover:text-cyan-400' : 'text-slate-900 group-hover:text-blue-700'}`}>
-                                                        {isEnglish ? (relatedPost.title_en || relatedPost.title_tr) : (relatedPost.title_tr || relatedPost.title_en)}
-                                                    </h5>
-                                                    <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-700'}`}>
-                                                        {new Date(relatedPost.created_at).toLocaleDateString(isEnglish ? 'en-US' : 'tr-TR')}
-                                                    </p>
-                                                </div>
-                                            </Link>
-                                        ))}
+                                {/* Related Posts */}
+                                {relatedPosts.length > 0 && (
+                                    <div className={`p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                                        <h4 className={`text-sm font-bold uppercase tracking-wider mb-6 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
+                                            Related Posts
+                                        </h4>
+                                        <div className="space-y-4">
+                                            {relatedPosts.map((relatedPost) => (
+                                                <Link key={relatedPost.id} href={`/blog/${relatedPost.slug}`}>
+                                                    <div className={`group cursor-pointer p-4 rounded-lg transition ${isDark ? 'hover:bg-slate-700' : 'hover:bg-white'}`}>
+                                                        <h5 className={`text-sm font-semibold mb-2 line-clamp-2 ${isDark ? 'text-slate-100 group-hover:text-cyan-400' : 'text-slate-900 group-hover:text-blue-700'}`}>
+                                                            {isEnglish ? (relatedPost.title_en || relatedPost.title_tr) : (relatedPost.title_tr || relatedPost.title_en)}
+                                                        </h5>
+                                                        <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-700'}`}>
+                                                            {new Date(relatedPost.created_at).toLocaleDateString(isEnglish ? 'en-US' : 'tr-TR')}
+                                                        </p>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

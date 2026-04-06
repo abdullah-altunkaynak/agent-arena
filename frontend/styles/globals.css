@@ -193,3 +193,17 @@ body {
     conic-gradient(from var(--angle), transparent 70%, var(--accent-cyan) 100%) border-box;
   animation: borderRotate 4s linear infinite;
 }
+
+.blog-excerpt>* {
+  display: inline;
+  margin: 0;
+}
+
+.blog-excerpt a {
+  color: #22d3ee;
+  text-decoration: underline;
+}
+
+.blog-excerpt-light a {
+  color: rgba(255, 255, 255, 0.95);
+}

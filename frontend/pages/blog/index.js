@@ -210,6 +210,16 @@ export default function BlogPage() {
 
     const getPostTitle = (post) => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostExcerpt = (post) => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
+    const sanitizeHtmlContent = (html) => {
+        if (!html) return '';
+
+        return String(html)
+            .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
+            .replace(/\son\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+            .replace(/javascript:/gi, '');
+    };
+    const getPostExcerptHtml = (post) => sanitizeHtmlContent(getPostExcerpt(post));
     const getCategoryName = (cat) =>
         isEnglish
             ? (cat?.name_en || cat?.name_tr || cat?.name || 'Unnamed')
@@ -378,9 +388,10 @@ export default function BlogPage() {
                                                     <h2 className="text-2xl md:text-3xl font-black text-white mb-2 line-clamp-2">
                                                         {getPostTitle(featuredPost)}
                                                     </h2>
-                                                    <p className="text-white/80 text-sm line-clamp-2">
-                                                        {getPostExcerpt(featuredPost)}
-                                                    </p>
+                                                    <div
+                                                        className="blog-excerpt blog-excerpt-light text-white/80 text-sm line-clamp-2"
+                                                        dangerouslySetInnerHTML={{ __html: getPostExcerptHtml(featuredPost) }}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -454,9 +465,10 @@ export default function BlogPage() {
                                                     <h3 className={`text-lg font-bold mb-2 line-clamp-2 group-hover:text-cyan-400 transition ${isDark ? 'text-white' : 'text-slate-800'}`}>
                                                         {getPostTitle(post)}
                                                     </h3>
-                                                    <p className={`text-sm mb-3 line-clamp-2 ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-                                                        {getPostExcerpt(post)}
-                                                    </p>
+                                                    <div
+                                                        className={`blog-excerpt text-sm mb-3 line-clamp-2 ${isDark ? 'text-slate-300' : 'text-slate-800'}`}
+                                                        dangerouslySetInnerHTML={{ __html: getPostExcerptHtml(post) }}
+                                                    />
                                                     <div className={`flex items-center justify-between text-xs mt-auto pt-3 border-t ${isDark ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-600'}`}>
                                                         <div className="flex items-center gap-2">
                                                             <Calendar size={12} />
