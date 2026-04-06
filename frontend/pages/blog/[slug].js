@@ -169,6 +169,8 @@ export default function BlogPostPage() {
                 const plainLabel = String(label).replace(/<[^>]+>/g, '').trim() || href;
                 return `[${plainLabel}](${href})`;
             })
+            .replace(/<(?:b|strong)(?:\s[^>]*)?>([\s\S]*?)<\/(?:b|strong)>/gi, '**$1**')
+            .replace(/<(?:i|em)(?:\s[^>]*)?>([\s\S]*?)<\/(?:i|em)>/gi, '*$1*')
             .replace(/<br\s*\/?>/gi, '\n');
     };
 
