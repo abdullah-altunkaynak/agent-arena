@@ -43,6 +43,7 @@ class BlogDatabaseService:
         # Use service role key for backend operations
         self.supabase_key = (
             os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            or os.getenv("SUPABASE_SERVICE_KEY")
             or os.getenv("SUPABASE_KEY")
             or os.getenv("SUPABASE_ANON_KEY")
         )
@@ -51,7 +52,7 @@ class BlogDatabaseService:
         if not self.supabase_url or not self.supabase_key:
             logger.warning(
                 "Supabase credentials not configured. "
-                "Set SUPABASE_URL and one of SUPABASE_SERVICE_ROLE_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY env variables."
+                "Set SUPABASE_URL and one of SUPABASE_SERVICE_ROLE_KEY, SUPABASE_SERVICE_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY env variables."
             )
             self.client: Optional[Client] = None
         else:
@@ -63,7 +64,7 @@ class BlogDatabaseService:
         if not self.client:
             raise RuntimeError(
                 "Supabase client not initialized. "
-                "Ensure SUPABASE_URL and one of SUPABASE_SERVICE_ROLE_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY are set."
+                "Ensure SUPABASE_URL and one of SUPABASE_SERVICE_ROLE_KEY, SUPABASE_SERVICE_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY are set."
             )
 
     async def create_post(self, post_data: PostCreate) -> PostResponse:
@@ -387,15 +388,68 @@ class BlogDatabaseService:
         else:
             raise Exception(f"Failed to update view count: {post_id}")
 
-    async def get_categories(self) -> List[Dict]:
-        """Get all categories"""
+    async def get_categories(
+        self,
+        used_only: bool = False,
+        status: Optional[PostStatus] = None,
+    ) -> List[Dict]:
+        """Get categories, optionally limited to categories referenced by posts."""
         self._check_connection()
         try:
             response = self.client.table("categories").select("*").execute()
-            return response.data if response.data else []
+            categories = response.data if response.data else []
+            normalized = [self._normalize_category_row(category) for category in categories]
+
+            if not used_only:
+                return normalized
+
+            post_rows = self.client.table("posts").select("category_id,status").execute().data or []
+            if status:
+                used_category_ids = {
+                    row.get("category_id")
+                    for row in post_rows
+                    if row.get("category_id") and row.get("status") == status.value
+                }
+            else:
+                used_category_ids = {
+                    row.get("category_id")
+                    for row in post_rows
+                    if row.get("category_id")
+                }
+
+            return [category for category in normalized if category.get("id") in used_category_ids]
         except Exception as e:
             logger.error(f"Error fetching categories: {str(e)}")
             return []
+
+    def _normalize_category_row(self, row: Dict) -> Dict:
+        """Map category rows into the API schema without assuming a single DB layout."""
+        source = row or {}
+        name_tr = (
+            source.get("name_tr")
+            or source.get("name")
+            or source.get("title_tr")
+            or source.get("title")
+            or source.get("slug")
+            or "Kategori"
+        )
+        name_en = source.get("name_en") or source.get("name") or name_tr
+        slug = source.get("slug") or _slugify_text(name_tr)
+        description_tr = source.get("description_tr") or source.get("description") or ""
+        description_en = source.get("description_en") or source.get("description") or description_tr
+
+        normalized = dict(source)
+        normalized.update(
+            {
+                "name_tr": name_tr,
+                "name_en": name_en,
+                "slug": slug,
+                "description_tr": description_tr,
+                "description_en": description_en,
+                "icon": source.get("icon"),
+            }
+        )
+        return normalized
 
     async def get_category_id_by_name_tr(self, name_tr: str) -> Optional[str]:
         """Resolve category UUID by Turkish category name."""
@@ -472,9 +526,12 @@ class BlogDatabaseService:
             response = (
                 self.client.table("categories")
                 .insert({
-                    "name": category_data.name,
+                    "name_tr": getattr(category_data, "name_tr", None) or getattr(category_data, "name", None),
+                    "name_en": getattr(category_data, "name_en", None),
                     "slug": category_data.slug,
-                    "description": category_data.description or "",
+                    "description_tr": getattr(category_data, "description_tr", None) or getattr(category_data, "description", None) or "",
+                    "description_en": getattr(category_data, "description_en", None) or getattr(category_data, "description", None) or "",
+                    "icon": getattr(category_data, "icon", None),
                 })
                 .execute()
             )
@@ -558,6 +615,56 @@ class BlogDatabaseService:
         except Exception as e:
             logger.error(f"Error uploading image: {str(e)}")
             raise Exception(f"Failed to upload image: {str(e)}")
+
+    async def subscribe_newsletter(
+        self,
+        email: str,
+        source: Optional[str] = "blog_post",
+        slug: Optional[str] = None,
+    ) -> Dict:
+        """Create newsletter subscription if not already present."""
+        self._check_connection()
+
+        normalized_email = (email or "").strip().lower()
+        if not normalized_email:
+            raise ValueError("Email is required")
+
+        try:
+            existing = (
+                self.client.table("newsletter_subscribers")
+                .select("id,email,created_at")
+                .eq("email", normalized_email)
+                .limit(1)
+                .execute()
+            )
+
+            if existing.data:
+                return {
+                    "success": True,
+                    "message": "This email is already subscribed.",
+                    "email": normalized_email,
+                    "already_subscribed": True,
+                }
+
+            payload = {
+                "email": normalized_email,
+                "source": source or "blog_post",
+                "slug": slug,
+            }
+
+            created = self.client.table("newsletter_subscribers").insert(payload).execute()
+            if created.data:
+                return {
+                    "success": True,
+                    "message": "Subscription completed successfully.",
+                    "email": normalized_email,
+                    "already_subscribed": False,
+                }
+
+            raise Exception("Failed to create newsletter subscription")
+        except Exception as e:
+            logger.error(f"Error subscribing newsletter for {normalized_email}: {str(e)}")
+            raise
 
     def _ensure_images_bucket_exists(self) -> None:
         """Create the blog images bucket if it does not exist."""

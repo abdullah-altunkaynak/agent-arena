@@ -363,18 +363,6 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* ── FOOTER ────────────────────────────────────────────────────── */}
-        <footer className="border-t border-[rgba(255,255,255,.04)] py-8 px-6">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-sm font-mono text-mist">
-              <Cpu size={14} className="text-cyan-400" />
-              <span>Agent<span className="text-cyan-400">Arena</span> · Open Source Industrial AI Hub</span>
-            </div>
-            <div className="text-xs font-mono text-mist">
-              Phase 5 · {new Date().getFullYear()}
-            </div>
-          </div>
-        </footer>
       </div>
     </>
   );

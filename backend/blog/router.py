@@ -24,6 +24,10 @@ from .models import (
     SlugResolutionResponse,
     CategoryBase,
     CategoryResponse,
+    NewsletterSubscriptionCreate,
+    NewsletterSubscriptionCreate,
+    NewsletterSubscriptionResponse,
+    NewsletterSubscriptionResponse,
 )
 from .database import get_blog_service
 
@@ -48,6 +52,29 @@ VALID_API_KEYS = [
     os.getenv("BLOG_ADMIN_KEY", "super-secret-admin-key-12345"),
     os.getenv("BLOG_N8N_KEY", "super-secret-n8n-key-67890"),
 ]
+
+
+@router.post(
+    "/newsletter/subscribe",
+    response_model=NewsletterSubscriptionResponse,
+    summary="Subscribe an email to blog newsletter",
+    tags=["Newsletter"],
+)
+async def subscribe_newsletter(payload: NewsletterSubscriptionCreate) -> NewsletterSubscriptionResponse:
+    """Create a newsletter subscription entry for a valid email."""
+    try:
+        service = get_blog_service()
+        result = await service.subscribe_newsletter(
+            email=payload.email,
+            source=payload.source,
+            slug=payload.slug,
+        )
+        return NewsletterSubscriptionResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error subscribing newsletter: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to subscribe newsletter")
 
 
 async def verify_api_key(x_api_key: Optional[str] = Header(None)) -> str:
@@ -421,11 +448,14 @@ async def delete_post(
 
 
 @router.get("/categories", response_model=list[CategoryResponse])
-async def get_categories():
-    """Get all blog categories"""
+async def get_categories(
+    used_only: bool = Query(False, description="Return only categories referenced by posts"),
+    status: Optional[PostStatus] = Query(None, description="When used_only=true, filter by post status"),
+):
+    """Get blog categories."""
     try:
         service = get_blog_service()
-        categories = await service.get_categories()
+        categories = await service.get_categories(used_only=used_only, status=status)
         return categories
     except Exception as e:
         logger.error(f"Error fetching categories: {str(e)}")
@@ -491,3 +521,31 @@ async def search_posts(
     except Exception as e:
         logger.error(f"Error searching posts: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+# ============================================================================
+# Newsletter Endpoints
+# ============================================================================
+
+
+@router.post(
+    "/newsletter/subscribe",
+    response_model=NewsletterSubscriptionResponse,
+    summary="Subscribe to blog newsletter",
+    tags=["Newsletter"],
+)
+async def subscribe_newsletter(payload: NewsletterSubscriptionCreate) -> NewsletterSubscriptionResponse:
+    """Subscribe an email address to the blog newsletter."""
+    try:
+        service = get_blog_service()
+        result = await service.subscribe_newsletter(
+            email=payload.email,
+            source=payload.source,
+            slug=payload.slug,
+        )
+        return NewsletterSubscriptionResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error subscribing newsletter: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to subscribe newsletter")

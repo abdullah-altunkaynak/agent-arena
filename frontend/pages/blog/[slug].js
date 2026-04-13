@@ -15,6 +15,8 @@ import {
     Bookmark,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import Navbar from '../../components/Navbar';
 
 const BLOG_API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
@@ -34,6 +36,10 @@ export default function BlogPostPage() {
     const [popularPosts, setPopularPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [newsletterEmail, setNewsletterEmail] = useState('');
+    const [newsletterMessage, setNewsletterMessage] = useState('');
+    const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
+    const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
     const isDark = true;
     const isEnglish = language === 'en';
@@ -144,23 +150,6 @@ export default function BlogPostPage() {
             .trim();
     };
 
-    const sanitizeHtmlContent = (html) => {
-        if (!html) return '';
-
-        return String(html)
-            .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
-            .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
-            .replace(/\son\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-            .replace(/javascript:/gi, '');
-    };
-
-    const isLikelyHtml = (value) => /<\s*\/?\s*[a-z][^>]*>/i.test(String(value || ''));
-
-    const hasMarkdownSyntax = (value) => {
-        const text = String(value || '');
-        return /(#{1,6}\s)|(^|\s)-\s+|(\d+\.\s)|(```)|(\*\*[^*]+\*\*)/.test(text);
-    };
-
     const htmlAnchorsToMarkdown = (value) => {
         if (!value) return '';
 
@@ -201,14 +190,10 @@ export default function BlogPostPage() {
     const getPostTitle = () => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostContent = () => isEnglish ? (post.content_en || post.content_tr) : (post.content_tr || post.content_en);
     const getPostExcerpt = () => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
-    const getPostContentHtml = () => sanitizeHtmlContent(getPostContent());
-    const getPostExcerptHtml = () => sanitizeHtmlContent(getPostExcerpt());
     const postContent = getPostContent();
     const postExcerpt = getPostExcerpt();
     const postContentForMarkdown = htmlAnchorsToMarkdown(postContent);
     const postExcerptForMarkdown = htmlAnchorsToMarkdown(postExcerpt);
-    const contentIsHtml = isLikelyHtml(postContent) && !hasMarkdownSyntax(postContentForMarkdown);
-    const excerptIsHtml = isLikelyHtml(postExcerpt) && !hasMarkdownSyntax(postExcerptForMarkdown);
     const normalizedPostContent = normalizeMarkdownContent(postContentForMarkdown);
     const normalizedPostExcerpt = normalizeMarkdownContent(postExcerptForMarkdown);
 
@@ -269,6 +254,81 @@ export default function BlogPostPage() {
                 item: canonicalUrl,
             },
         ],
+    };
+
+    const newsletterText = isEnglish
+        ? {
+            title: 'Subscribe to Our Newsletter',
+            subtitle: 'Get an email when new articles are published.',
+            placeholder: 'name@email.com',
+            submit: 'Subscribe',
+            submitting: 'Submitting...',
+            alreadySubscribed: 'You are already subscribed to the newsletter.',
+            invalidEmail: 'Please enter a valid email address.',
+            fallbackSuccess: 'Subscription completed successfully.',
+            fallbackFailure: 'Subscription failed',
+        }
+        : {
+            title: 'Haber Bultenimize Uye Olun',
+            subtitle: 'Yeni yazilar yayinlandiginda e-posta ile bildirim alin.',
+            placeholder: 'ornek@email.com',
+            submit: 'Abone Ol',
+            submitting: 'Gonderiliyor...',
+            alreadySubscribed: 'Zaten haber bültenine kayıtlısınız.',
+            invalidEmail: 'Lutfen gecerli bir e-posta adresi girin.',
+            fallbackSuccess: 'Abonelik basariyla tamamlandi.',
+            fallbackFailure: 'Abonelik basarisiz oldu',
+        };
+
+    const isValidEmail = (value) => {
+        const email = String(value || '').trim();
+        return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
+    };
+
+    const handleNewsletterSubmit = async (event) => {
+        event.preventDefault();
+        const normalizedEmail = newsletterEmail.trim().toLowerCase();
+
+        if (!isValidEmail(normalizedEmail)) {
+            setNewsletterSuccess(false);
+            setNewsletterMessage(newsletterText.invalidEmail);
+            return;
+        }
+
+        try {
+            setNewsletterSubmitting(true);
+            setNewsletterMessage('');
+
+            const response = await fetch('/api/blog/newsletter/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: normalizedEmail,
+                    source: 'blog_detail_footer',
+                    slug,
+                }),
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload?.detail || payload?.error || newsletterText.fallbackFailure);
+            }
+
+            setNewsletterSuccess(true);
+            setNewsletterMessage(
+                payload?.already_subscribed
+                    ? newsletterText.alreadySubscribed
+                    : (payload?.message || newsletterText.fallbackSuccess)
+            );
+            setNewsletterEmail('');
+        } catch (submitError) {
+            setNewsletterSuccess(false);
+            setNewsletterMessage(submitError.message || newsletterText.fallbackFailure);
+        } finally {
+            setNewsletterSubmitting(false);
+        }
     };
 
     return (
@@ -422,41 +482,53 @@ export default function BlogPostPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="ml-auto flex items-center gap-2">
-                                    <button className={`p-2 rounded-lg transition ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}>
-                                        <Share2 size={18} className={isDark ? 'text-slate-400' : 'text-slate-700'} />
-                                    </button>
-                                    <button className={`p-2 rounded-lg transition ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}>
-                                        <Bookmark size={18} className={isDark ? 'text-slate-400' : 'text-slate-700'} />
-                                    </button>
-                                </div>
                             </div>
 
                             {/* Excerpt */}
                             {(isEnglish ? post.excerpt_en : post.excerpt_tr) && (
-                                excerptIsHtml ? (
-                                    <div
-                                        className={`prose prose-lg max-w-none mb-8 ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700'} prose-p:my-0 prose-ul:my-2 prose-ol:my-2`}
-                                        dangerouslySetInnerHTML={{ __html: getPostExcerptHtml() }}
-                                    />
-                                ) : (
-                                    <div className={`prose prose-lg max-w-none mb-8 ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700'} prose-p:my-0 prose-ul:my-2 prose-ol:my-2`}>
-                                        <ReactMarkdown>{normalizedPostExcerpt}</ReactMarkdown>
-                                    </div>
-                                )
+                                <div className={`prose prose-lg max-w-none mb-8 ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700'} prose-p:my-0 prose-ul:my-2 prose-ol:my-2`}>
+                                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>{normalizedPostExcerpt}</ReactMarkdown>
+                                </div>
                             )}
 
                             {/* Content */}
-                            {contentIsHtml ? (
-                                <div
-                                    className={`prose max-w-none ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-strong:text-white prose-li:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300 prose-code:text-cyan-300 prose-pre:bg-slate-800 prose-blockquote:border-cyan-500 prose-blockquote:text-slate-400' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-strong:text-slate-900 prose-li:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-code:text-blue-700 prose-pre:bg-slate-100 prose-blockquote:border-blue-600 prose-blockquote:text-slate-700'} prose-img:rounded-lg prose-img:w-full`}
-                                    dangerouslySetInnerHTML={{ __html: getPostContentHtml() }}
-                                />
-                            ) : (
-                                <div className={`prose max-w-none ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-strong:text-white prose-li:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300 prose-code:text-cyan-300 prose-pre:bg-slate-800 prose-blockquote:border-cyan-500 prose-blockquote:text-slate-400' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-strong:text-slate-900 prose-li:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-code:text-blue-700 prose-pre:bg-slate-100 prose-blockquote:border-blue-600 prose-blockquote:text-slate-700'} prose-img:rounded-lg prose-img:w-full`}>
-                                    <ReactMarkdown>{normalizedPostContent}</ReactMarkdown>
-                                </div>
-                            )}
+                            <div className={`prose max-w-none ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-strong:text-white prose-li:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300 prose-code:text-cyan-300 prose-pre:bg-slate-800 prose-blockquote:border-cyan-500 prose-blockquote:text-slate-400' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-strong:text-slate-900 prose-li:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-code:text-blue-700 prose-pre:bg-slate-100 prose-blockquote:border-blue-600 prose-blockquote:text-slate-700'} prose-img:rounded-lg prose-img:w-full`}>
+                                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>{normalizedPostContent}</ReactMarkdown>
+                            </div>
+
+                            {/* Newsletter Subscription */}
+                            <div className={`mt-12 rounded-xl border p-6 ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                                <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                    {newsletterText.title}
+                                </h3>
+                                <p className={`text-sm mb-4 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                                    {newsletterText.subtitle}
+                                </p>
+
+                                <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3">
+                                    <input
+                                        type="email"
+                                        value={newsletterEmail}
+                                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                                        placeholder={newsletterText.placeholder}
+                                        className={`flex-1 px-4 py-2 rounded-lg border focus:outline-none ${isDark ? 'bg-slate-900 border-slate-600 text-slate-100 placeholder-slate-500 focus:border-cyan-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-500 focus:border-blue-600'}`}
+                                        required
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={newsletterSubmitting}
+                                        className={`px-5 py-2 rounded-lg font-semibold transition disabled:opacity-60 ${isDark ? 'bg-cyan-500 text-slate-900 hover:bg-cyan-400' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                                    >
+                                        {newsletterSubmitting ? newsletterText.submitting : newsletterText.submit}
+                                    </button>
+                                </form>
+
+                                {newsletterMessage ? (
+                                    <p className={`text-sm mt-3 ${newsletterSuccess ? (isDark ? 'text-emerald-400' : 'text-emerald-700') : (isDark ? 'text-rose-400' : 'text-rose-700')}`}>
+                                        {newsletterMessage}
+                                    </p>
+                                ) : null}
+                            </div>
                         </div>
 
                         {/* Sidebar - 1/3 width */}

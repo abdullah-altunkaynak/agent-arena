@@ -22,9 +22,9 @@ class PostStatus(str, Enum):
 
 class CategoryBase(BaseModel):
     """Base model for blog categories"""
-    name_tr: str = Field(..., min_length=3, max_length=100, description="Turkish category name")
+    name_tr: str = Field(..., min_length=1, max_length=100, description="Turkish category name")
     name_en: Optional[str] = Field(None, max_length=100, description="English category name")
-    slug: str = Field(..., min_length=3, max_length=100, description="URL slug")
+    slug: str = Field(..., min_length=1, max_length=100, description="URL slug")
     description_tr: Optional[str] = Field(None, description="Turkish description")
     description_en: Optional[str] = Field(None, description="English description")
     icon: Optional[str] = Field(None, max_length=50, description="Emoji or icon")
@@ -173,6 +173,39 @@ class BulkOperationResponse(BaseModel):
     success: bool
     message: str
     affected_rows: int
+
+
+# ============================================================================
+# NEWSLETTER MODELS
+# ============================================================================
+
+class NewsletterSubscriptionCreate(BaseModel):
+    """Schema for newsletter subscription requests"""
+    email: str = Field(..., min_length=5, max_length=320, description="Subscriber email")
+    source: Optional[str] = Field("blog_post", max_length=100, description="Subscription source")
+    slug: Optional[str] = Field(None, max_length=255, description="Blog slug context")
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v):
+        email = (v or "").strip().lower()
+        if not email:
+            raise ValueError("Email is required")
+
+        # Simple RFC-inspired validation for backend safety without extra deps.
+        import re
+
+        if not re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email):
+            raise ValueError("Invalid email format")
+        return email
+
+
+class NewsletterSubscriptionResponse(BaseModel):
+    """Schema for newsletter subscription responses"""
+    success: bool
+    message: str
+    email: str
+    already_subscribed: bool = False
 
 
 # ============================================================================

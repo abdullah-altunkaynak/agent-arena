@@ -56,11 +56,23 @@ export default function CreatePostPage() {
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch(`${API_BASE}/categories`);
+            const response = await fetch('/api/blog/categories');
+            if (!response.ok) {
+                throw new Error(`Categories request failed with status ${response.status}`);
+            }
             const data = await response.json();
-            setCategories(data);
+            const normalizedCategories = Array.isArray(data)
+                ? data
+                : Array.isArray(data?.items)
+                    ? data.items
+                    : Array.isArray(data?.categories)
+                        ? data.categories
+                        : [];
+
+            setCategories(normalizedCategories);
         } catch (err) {
             console.error('Error fetching categories:', err);
+            setCategories([]);
         }
     };
 

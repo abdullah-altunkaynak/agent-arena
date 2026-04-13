@@ -3,16 +3,13 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
-    Search,
     Eye,
     Calendar,
     Tag,
     Flame,
     TrendingUp,
     Clock,
-    Home,
     ChevronRight,
-    Grid3x3,
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
@@ -25,13 +22,13 @@ export default function BlogPage() {
 
     const [featuredPost, setFeaturedPost] = useState(null);
     const [posts, setPosts] = useState([]);
+    const [allPosts, setAllPosts] = useState([]);
     const [categories, setCategories] = useState([]);
-    const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
-    const [selectedTag, setSelectedTag] = useState('all');
     const [filteredPosts, setFilteredPosts] = useState([]);
+    const [randomShowcasePosts, setRandomShowcasePosts] = useState([]);
+    const [randomShowcaseCategories, setRandomShowcaseCategories] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalPosts, setTotalPosts] = useState(0);
@@ -47,7 +44,6 @@ export default function BlogPage() {
             insights: 'Insights',
             articles: 'Articles',
             subtitle: 'Explore the latest developments in AI, automation, and industrial innovation',
-            search: 'Search articles...',
             allCategories: 'All Categories',
             latest: 'Latest',
             trending: 'Trending',
@@ -65,7 +61,6 @@ export default function BlogPage() {
             insights: 'Yazılar',
             articles: 'Makaleler',
             subtitle: 'Yapay zeka, otomasyon ve endüstriyel inovasyondaki en son gelişmeleri keşfedin',
-            search: 'Makalelerle ara...',
             allCategories: 'Tüm Kategoriler',
             latest: 'Son Yazılar',
             trending: 'Trend Yapanlar',
@@ -106,12 +101,21 @@ export default function BlogPage() {
         }
     }, [router.isReady, router.query.lang]);
 
+    useEffect(() => {
+        if (!router.isReady || !mounted) return;
+
+        const incomingCategory = typeof router.query.category === 'string' ? router.query.category : 'all';
+        setSelectedCategory(incomingCategory || 'all');
+        setCurrentPage(1);
+    }, [router.isReady, router.query.category, mounted]);
+
     // Fetch posts and categories when component mounts
     useEffect(() => {
         if (mounted) {
             const fetchData = async () => {
                 await fetchPosts();
                 await fetchCategories();
+                await fetchAllPublishedPosts();
             };
             fetchData();
         }
@@ -119,10 +123,15 @@ export default function BlogPage() {
 
     // Re-fetch posts when category changes
     useEffect(() => {
-        if (mounted && categories.length > 0) {
+        if (mounted) {
             fetchPosts();
         }
     }, [selectedCategory, currentPage]);
+
+    useEffect(() => {
+        if (!mounted) return;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentPage]);
 
     const fetchPosts = async () => {
         try {
@@ -162,34 +171,93 @@ export default function BlogPage() {
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch(`${API_BASE}/categories`);
+            const response = await fetch('/api/blog/categories');
+            if (!response.ok) {
+                throw new Error(`Categories request failed with status ${response.status}`);
+            }
             const data = await response.json();
-            setCategories(data || []);
+            const normalizedCategories = Array.isArray(data)
+                ? data
+                : Array.isArray(data?.items)
+                    ? data.items
+                    : Array.isArray(data?.categories)
+                        ? data.categories
+                        : [];
+
+            setCategories(normalizedCategories);
         } catch (err) {
             console.error('Error fetching categories:', err);
             setCategories([]);
         }
     };
 
-    useEffect(() => {
-        let filtered = posts;
-        if (searchTerm) {
-            const titleField = isEnglish ? 'title_en' : 'title_tr';
-            const excerptField = isEnglish ? 'excerpt_en' : 'excerpt_tr';
-            filtered = filtered.filter((post) =>
-                (post[titleField]?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (post[excerptField]?.toLowerCase().includes(searchTerm.toLowerCase()))
-            );
+    const fetchAllPublishedPosts = async () => {
+        try {
+            const pageSize = 100;
+            let page = 1;
+            let totalPagesFromApi = 1;
+            const collected = [];
+
+            do {
+                const params = new URLSearchParams({
+                    status: 'published',
+                    page: String(page),
+                    page_size: String(pageSize),
+                });
+
+                const response = await fetch(`${API_BASE}/posts?${params}`);
+                if (!response.ok) {
+                    throw new Error(`All posts request failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                collected.push(...(data.items || []));
+                totalPagesFromApi = Math.max(data.total_pages || 1, 1);
+                page += 1;
+            } while (page <= totalPagesFromApi);
+
+            setAllPosts(collected);
+        } catch (err) {
+            console.error('Error fetching all posts for widgets:', err);
+            setAllPosts([]);
         }
-        setFilteredPosts(filtered);
-    }, [searchTerm, posts, language]);
+    };
+
+    useEffect(() => {
+        setFilteredPosts(posts);
+    }, [posts]);
+
+    const pickRandomItems = (items, count) => {
+        const source = Array.isArray(items) ? items.slice() : [];
+        for (let i = source.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [source[i], source[j]] = [source[j], source[i]];
+        }
+        return source.slice(0, Math.min(count, source.length));
+    };
+
+    useEffect(() => {
+        if (allPosts.length === 0) {
+            setRandomShowcasePosts([]);
+            return;
+        }
+        setRandomShowcasePosts(pickRandomItems(allPosts, 5));
+    }, [allPosts]);
+
+    useEffect(() => {
+        if (categories.length === 0) {
+            setRandomShowcaseCategories([]);
+            return;
+        }
+        setRandomShowcaseCategories(pickRandomItems(categories, 8));
+    }, [categories]);
 
     const getTrendingPosts = () => {
-        return posts.slice().sort((a, b) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 5);
+        return allPosts.slice().sort((a, b) => getViewCount(b) - getViewCount(a)).slice(0, 5);
     };
 
     const getLatestPosts = () => {
-        return posts.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+        return allPosts.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
     };
 
     const toggleLanguage = () => {
@@ -206,10 +274,37 @@ export default function BlogPage() {
         );
     };
 
+    const applyCategoryFilter = (categoryId) => {
+        const normalized = categoryId || 'all';
+        setSelectedCategory(normalized);
+        setCurrentPage(1);
+
+        const nextQuery = { ...router.query, lang: language };
+        if (normalized === 'all') {
+            delete nextQuery.category;
+        } else {
+            nextQuery.category = normalized;
+        }
+
+        router.replace(
+            {
+                pathname: router.pathname,
+                query: nextQuery,
+            },
+            undefined,
+            { shallow: true }
+        );
+    };
+
     if (!mounted) return null;
 
     const getPostTitle = (post) => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostExcerpt = (post) => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
+    const getViewCount = (post) => {
+        const raw = post?.view_count ?? post?.views ?? post?.viewCount ?? 0;
+        const parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
     const sanitizeHtmlContent = (html) => {
         if (!html) return '';
 
@@ -264,7 +359,7 @@ export default function BlogPage() {
             {/* Main Navbar */}
             <Navbar />
 
-            {/* Hero Section */}
+            {/* Showcase Section */}
             <div className={`pt-20 pb-12 px-4 ${isDark ? 'bg-gradient-to-b from-slate-800/50 to-slate-900 border-b border-slate-700' : 'bg-gradient-to-b from-slate-50 to-white border-b border-slate-200'}`}>
                 <div className="max-w-7xl mx-auto">
                     <div className="flex justify-between items-start mb-6">
@@ -301,16 +396,39 @@ export default function BlogPage() {
                         </div>
                     </div>
 
-                    {/* Search */}
-                    <div className="relative max-w-2xl">
-                        <Search className={`absolute left-4 top-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={20} />
-                        <input
-                            type="text"
-                            placeholder={trans.search}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-12 pr-4 py-3 rounded-lg border transition focus:outline-none ${isDark ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:border-cyan-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-600'}`}
-                        />
+                    <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mt-8">
+                        {randomShowcasePosts.map((post) => (
+                            <Link key={post.id} href={`/blog/${post.slug}`}>
+                                <div className={`rounded-lg overflow-hidden border h-full cursor-pointer group ${isDark ? 'bg-slate-800/40 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
+                                    {post.featured_image_url ? (
+                                        <img
+                                            src={post.featured_image_url}
+                                            alt={getPostTitle(post)}
+                                            className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
+                                    ) : null}
+                                    <div className="p-3">
+                                        <h3 className={`text-sm font-bold line-clamp-2 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                                            {getPostTitle(post)}
+                                        </h3>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mt-4">
+                        {randomShowcaseCategories.map((cat) => (
+                            <button
+                                key={cat.id}
+                                onClick={() => applyCategoryFilter(cat.id)}
+                                className={`text-left rounded-lg border p-3 transition ${isDark ? 'bg-slate-800/40 border-slate-700 hover:border-cyan-500/50 text-slate-200' : 'bg-white border-slate-200 hover:border-blue-300 text-slate-800'}`}
+                            >
+                                <div className="text-xs mb-1">{hasCategoryIcon(cat) ? cat.icon : '•'}</div>
+                                <div className="text-xs font-semibold line-clamp-2">{getCategoryName(cat)}</div>
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -357,7 +475,7 @@ export default function BlogPage() {
                                                 {getPostTitle(post)}
                                             </h4>
                                             <div className={`text-xs flex items-center gap-1 ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
-                                                <Eye size={12} /> {post.view_count} views
+                                                <Eye size={12} /> {getViewCount(post)} views
                                             </div>
                                         </div>
                                     </Link>
@@ -475,7 +593,7 @@ export default function BlogPage() {
                                                             {new Date(post.created_at).toLocaleDateString(isEnglish ? 'en-US' : 'tr-TR')}
                                                         </div>
                                                         <div className={`flex items-center gap-1 font-semibold ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
-                                                            <Eye size={12} /> {post.view_count}
+                                                            <Eye size={12} /> {getViewCount(post)}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -484,7 +602,7 @@ export default function BlogPage() {
                                     ))}
                                 </div>
 
-                                {totalPages > 1 && !searchTerm && (
+                                {totalPages > 1 && (
                                     <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
                                         {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
                                             <button
@@ -514,14 +632,19 @@ export default function BlogPage() {
                         <div className={`rounded-lg overflow-hidden ${isDark ? 'bg-slate-800/50 border border-slate-700' : 'bg-slate-50 border border-slate-200'}`}>
                             <div className={`p-4 flex items-center gap-2 border-b font-bold uppercase text-sm tracking-wider ${isDark ? 'bg-slate-800 border-slate-700 text-cyan-400' : 'bg-white border-slate-200 text-blue-600'}`}>
                                 <Tag size={16} /> {trans.categories}
+                                <Link
+                                    href={`/blog/categories?lang=${language}`}
+                                    className={`ml-auto text-xs normal-case font-semibold ${isDark ? 'text-cyan-300 hover:text-cyan-200' : 'text-blue-600 hover:text-blue-700'}`}
+                                >
+                                    All
+                                </Link>
                             </div>
-                            <div className="p-4 space-y-2">
+                            <div className="p-4 space-y-2 max-h-[420px] overflow-y-auto pr-1">
                                 {categories.map((cat) => (
                                     <button
                                         key={cat.id}
                                         onClick={() => {
-                                            setSelectedCategory(cat.id);
-                                            setCurrentPage(1);
+                                            applyCategoryFilter(cat.id);
                                         }}
                                         className={`w-full text-left px-3 py-2 rounded-lg transition flex items-center justify-between group ${selectedCategory === cat.id
                                             ? isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-blue-50 text-blue-700'
@@ -555,7 +678,7 @@ export default function BlogPage() {
                                 {featuredPost && (
                                     <div className={`flex justify-between ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                                         <span>Top Views</span>
-                                        <span className="font-bold">{Math.max(...posts.map(p => p.view_count || 0))}</span>
+                                        <span className="font-bold">{Math.max(...allPosts.map((p) => getViewCount(p)), 0)}</span>
                                     </div>
                                 )}
                             </div>

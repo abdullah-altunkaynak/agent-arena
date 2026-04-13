@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { ThemeProvider } from "next-themes";
 import { useRouter } from "next/router";
+import Footer from "../components/Footer";
 import "../styles/globals.css";
 
 export default function App({ Component, pageProps }) {
@@ -16,7 +17,10 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/96/robot-2.png" />
       </Head>
       {isBlogPage ? (
-        <Component {...pageProps} />
+        <>
+          <Component {...pageProps} />
+          <Footer />
+        </>
       ) : (
         <ThemeProvider
           attribute="class"
@@ -25,6 +29,7 @@ export default function App({ Component, pageProps }) {
           themes={["dark", "light"]}
         >
           <Component {...pageProps} />
+          <Footer />
         </ThemeProvider>
       )}
     </>
