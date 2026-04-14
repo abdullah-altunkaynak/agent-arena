@@ -10,6 +10,7 @@ import {
     TrendingUp,
     Clock,
     ChevronRight,
+    Sparkles,
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
@@ -29,6 +30,7 @@ export default function BlogPage() {
     const [filteredPosts, setFilteredPosts] = useState([]);
     const [randomShowcasePosts, setRandomShowcasePosts] = useState([]);
     const [randomShowcaseCategories, setRandomShowcaseCategories] = useState([]);
+    const [showcaseReady, setShowcaseReady] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalPosts, setTotalPosts] = useState(0);
@@ -109,13 +111,12 @@ export default function BlogPage() {
         setCurrentPage(1);
     }, [router.isReady, router.query.category, mounted]);
 
-    // Fetch posts and categories when component mounts
+    // Fetch non-blocking data when component mounts
     useEffect(() => {
         if (mounted) {
             const fetchData = async () => {
-                await fetchPosts();
-                await fetchCategories();
-                await fetchAllPublishedPosts();
+                await Promise.all([fetchCategories(), fetchWidgetPosts()]);
+                setShowcaseReady(true);
             };
             fetchData();
         }
@@ -123,10 +124,10 @@ export default function BlogPage() {
 
     // Re-fetch posts when category changes
     useEffect(() => {
-        if (mounted) {
+        if (mounted && showcaseReady) {
             fetchPosts();
         }
-    }, [selectedCategory, currentPage]);
+    }, [mounted, showcaseReady, selectedCategory, currentPage]);
 
     useEffect(() => {
         if (!mounted) return;
@@ -191,34 +192,24 @@ export default function BlogPage() {
         }
     };
 
-    const fetchAllPublishedPosts = async () => {
+    const fetchWidgetPosts = async () => {
         try {
-            const pageSize = 100;
-            let page = 1;
-            let totalPagesFromApi = 1;
-            const collected = [];
+            // Keep this lightweight so hero random cards and side widgets render quickly.
+            const params = new URLSearchParams({
+                status: 'published',
+                page: '1',
+                page_size: '40',
+            });
 
-            do {
-                const params = new URLSearchParams({
-                    status: 'published',
-                    page: String(page),
-                    page_size: String(pageSize),
-                });
+            const response = await fetch(`${API_BASE}/posts?${params}`);
+            if (!response.ok) {
+                throw new Error(`Widget posts request failed with status ${response.status}`);
+            }
 
-                const response = await fetch(`${API_BASE}/posts?${params}`);
-                if (!response.ok) {
-                    throw new Error(`All posts request failed with status ${response.status}`);
-                }
-
-                const data = await response.json();
-                collected.push(...(data.items || []));
-                totalPagesFromApi = Math.max(data.total_pages || 1, 1);
-                page += 1;
-            } while (page <= totalPagesFromApi);
-
-            setAllPosts(collected);
+            const data = await response.json();
+            setAllPosts(data.items || []);
         } catch (err) {
-            console.error('Error fetching all posts for widgets:', err);
+            console.error('Error fetching widget posts:', err);
             setAllPosts([]);
         }
     };
@@ -319,6 +310,16 @@ export default function BlogPage() {
         isEnglish
             ? (cat?.name_en || cat?.name_tr || cat?.name || 'Unnamed')
             : (cat?.name_tr || cat?.name_en || cat?.name || 'Isimsiz');
+
+    const techNewsCategory = categories.find((cat) => {
+        const nameEn = String(cat?.name_en || '').toLowerCase();
+        const nameTr = String(cat?.name_tr || '').toLowerCase();
+        const nameAny = String(cat?.name || '').toLowerCase();
+        return nameEn === 'tech news'
+            || nameTr === 'teknoloji haberleri'
+            || nameAny === 'tech news'
+            || nameAny === 'teknoloji haberleri';
+    });
     const hasCategoryIcon = (cat) => typeof cat?.icon === 'string' && cat.icon.trim().length > 0;
     const canonicalUrl = `${SITE_URL}/blog`;
     const hreflangTrUrl = `${SITE_URL}/blog?lang=tr`;
@@ -395,6 +396,44 @@ export default function BlogPage() {
                             </button>
                         </div>
                     </div>
+
+                    <Link
+                        href={`/blog/tech-news?lang=${language}`}
+                        className={`block rounded-xl border p-5 md:p-6 transition mb-6 ${isDark
+                            ? 'bg-gradient-to-r from-cyan-500/15 via-slate-800 to-slate-800 border-cyan-500/40 hover:border-cyan-400'
+                            : 'bg-gradient-to-r from-blue-100 via-white to-white border-blue-300 hover:border-blue-400'
+                            }`}
+                    >
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <p className={`text-xs uppercase tracking-widest font-bold mb-2 ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
+                                    {isEnglish ? 'Most Important Stream' : 'En Onemli Akis'}
+                                </p>
+                                <h2 className={`text-2xl md:text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                    {isEnglish ? 'Tech News' : 'Teknoloji Haberleri'}
+                                </h2>
+                                <p className={`${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                                    {isEnglish
+                                        ? 'Latest AI-powered technology news posts, sorted from newest to oldest in one place.'
+                                        : 'Yapay zeka tarafindan uretilen guncel teknoloji haberleri, yeni tarihten eskiye tek sayfada.'}
+                                </p>
+                            </div>
+
+                            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold ${isDark ? 'bg-cyan-500/20 text-cyan-300' : 'bg-blue-100 text-blue-700'}`}>
+                                <Sparkles size={16} />
+                                {isEnglish ? 'Open Tech News Feed' : 'Tech News Akisini Ac'}
+                                <ChevronRight size={16} />
+                            </div>
+                        </div>
+
+                        {techNewsCategory ? (
+                            <p className={`mt-3 text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                                {isEnglish
+                                    ? `Connected category: ${getCategoryName(techNewsCategory)}`
+                                    : `Bagli kategori: ${getCategoryName(techNewsCategory)}`}
+                            </p>
+                        ) : null}
+                    </Link>
 
                     <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mt-8">
                         {randomShowcasePosts.map((post) => (

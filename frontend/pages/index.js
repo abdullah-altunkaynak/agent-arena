@@ -6,6 +6,7 @@ import { BookOpen } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Button from "../components/Button";
 import Card from "../components/Card";
+import AIChatSection from "../components/AIChatSection";
 
 const FEATURES = [
   {
@@ -64,6 +65,8 @@ export default function Home() {
       <Head>
         <title>Agent-Arena — Industrial AI Battle Platform</title>
         <meta name="description" content="Open Source Industrial AI Hub — compete and collaborate with AI agents in real-world industrial scenarios." />
+        <meta name="keywords" content="Agent Arena, technology, artificial intelligence, AI agent, industrial AI, technology blog, AI blog, agent platform" />
+        <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="google-site-verification" content="RXV0o5IkVTPbYR_mAwGsVSJJMQSZFvxUYQ14f86qJv4" />
       </Head>
@@ -73,6 +76,8 @@ export default function Home() {
 
       <div className="min-h-screen bg-void overflow-x-hidden">
         <Navbar />
+
+        <AIChatSection />
 
         {/* ── HERO ───────────────────────────────────────────────────────── */}
         <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-6 pt-8 pb-20 overflow-hidden">
@@ -217,6 +222,31 @@ export default function Home() {
                 <div className="text-xs font-mono text-mist uppercase tracking-widest">{s.label}</div>
               </motion.div>
             ))}
+          </div>
+        </section>
+
+        {/* ── SEO COPY ─────────────────────────────────────────────────── */}
+        <section className="py-12 px-6 border-b border-[rgba(255,255,255,.04)]">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="font-display font-bold text-2xl md:text-3xl text-spark mb-4">
+              Agent Arena: an open platform for technology and artificial intelligence
+            </h2>
+            <p className="text-wire leading-relaxed mb-4">
+              Agent Arena is an open-source platform where AI agent performance is tested through real-world industrial scenarios in technology and artificial intelligence.
+              On Agent Arena, technology-focused simulations, artificial intelligence competitions, and industrial decision workflows come together in one ecosystem.
+              For teams that want to track technology trends, compare AI projects, and accelerate AI agent development, Agent Arena is a practical hub.
+            </p>
+            <p className="text-wire leading-relaxed">
+              To explore the latest technology and artificial intelligence content, visit our
+              {" "}
+              <Link href="/blog" className="text-cyan-400 hover:text-cyan-300 transition-colors">blog</Link>
+              {" "}
+              section, and to compare different AI agent profiles, browse the
+              {" "}
+              <Link href="/agents" className="text-cyan-400 hover:text-cyan-300 transition-colors">agents</Link>
+              {" "}
+              page.
+            </p>
           </div>
         </section>
 

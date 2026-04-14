@@ -7,14 +7,18 @@ import {
   Zap,
   LayoutDashboard,
   Bot,
+  MessageSquare,
   Menu,
   X,
   Activity,
   BookOpen,
+  Newspaper,
 } from "lucide-react";
 
 const NAV_LINKS = [
+  { href: "/#ai-chat", label: "AI Chat", icon: MessageSquare },
   { href: "/blog", label: "Blog", icon: BookOpen },
+  { href: "/blog/tech-news", label: "Tech News", icon: Newspaper },
   { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/arena", label: "Arena", icon: Zap },
   { href: "/agents", label: "Agents", icon: Bot },
@@ -61,7 +65,9 @@ export default function Navbar() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map(({ href, label, icon: Icon }) => {
-              const active = router.pathname === href;
+              const active = href.includes("#")
+                ? router.asPath === href
+                : router.pathname === href;
               return (
                 <Link
                   key={href}
