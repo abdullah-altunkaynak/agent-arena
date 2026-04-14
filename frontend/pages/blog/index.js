@@ -16,7 +16,6 @@ import Navbar from '../../components/Navbar';
 
 export default function BlogPage() {
     const router = useRouter();
-    const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
     const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
     const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
@@ -83,7 +82,6 @@ export default function BlogPage() {
     useEffect(() => {
         if (!router.isReady) return;
 
-        setMounted(true);
         const queryLang = typeof router.query.lang === 'string' ? normalizeLang(router.query.lang) : null;
         const savedLang = normalizeLang(localStorage.getItem('blogLanguage'));
         const selectedLang = queryLang || savedLang;
@@ -104,33 +102,32 @@ export default function BlogPage() {
     }, [router.isReady, router.query.lang]);
 
     useEffect(() => {
-        if (!router.isReady || !mounted) return;
+        if (!router.isReady) return;
 
         const incomingCategory = typeof router.query.category === 'string' ? router.query.category : 'all';
         setSelectedCategory(incomingCategory || 'all');
         setCurrentPage(1);
-    }, [router.isReady, router.query.category, mounted]);
+    }, [router.isReady, router.query.category]);
 
     // Fetch non-blocking data when component mounts
     useEffect(() => {
-        if (mounted) {
-            const fetchData = async () => {
-                await Promise.all([fetchCategories(), fetchWidgetPosts()]);
-                setShowcaseReady(true);
-            };
-            fetchData();
-        }
-    }, [mounted]);
+        if (!router.isReady) return;
+
+        const fetchData = async () => {
+            await Promise.all([fetchCategories(), fetchWidgetPosts()]);
+            setShowcaseReady(true);
+        };
+        fetchData();
+    }, [router.isReady]);
 
     // Re-fetch posts when category changes
     useEffect(() => {
-        if (mounted && showcaseReady) {
+        if (router.isReady && showcaseReady) {
             fetchPosts();
         }
-    }, [mounted, showcaseReady, selectedCategory, currentPage]);
+    }, [router.isReady, showcaseReady, selectedCategory, currentPage]);
 
     useEffect(() => {
-        if (!mounted) return;
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [currentPage]);
 
@@ -287,8 +284,6 @@ export default function BlogPage() {
         );
     };
 
-    if (!mounted) return null;
-
     const getPostTitle = (post) => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostExcerpt = (post) => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
     const getViewCount = (post) => {
@@ -348,6 +343,11 @@ export default function BlogPage() {
             <Head>
                 <title>{trans.insights} & {trans.articles}</title>
                 <meta name="description" content={trans.subtitle} />
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Agent Arena" />
+                <meta property="og:title" content={`${trans.insights} & ${trans.articles}`} />
+                <meta property="og:description" content={trans.subtitle} />
+                <meta property="og:url" content={canonicalUrl} />
                 <link rel="canonical" href={canonicalUrl} />
                 <link rel="alternate" hrefLang="tr" href={hreflangTrUrl} />
                 <link rel="alternate" hrefLang="en" href={hreflangEnUrl} />
@@ -433,6 +433,29 @@ export default function BlogPage() {
                                     : `Bagli kategori: ${getCategoryName(techNewsCategory)}`}
                             </p>
                         ) : null}
+                    </Link>
+
+                    <Link
+                        href={`/blog/archive?lang=${language}`}
+                        className={`block rounded-xl border p-4 md:p-5 transition mb-6 ${isDark
+                            ? 'bg-slate-800/60 border-slate-700 hover:border-cyan-400/50'
+                            : 'bg-white border-slate-200 hover:border-blue-300'
+                            }`}
+                    >
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <p className={`text-xs uppercase tracking-widest font-bold mb-1 ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
+                                    {isEnglish ? 'Full Archive' : 'Tam Arsiv'}
+                                </p>
+                                <h2 className={`text-xl md:text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                    {isEnglish ? 'Browse every published article' : 'Yayinlanmis tum yazilari gez'}
+                                </h2>
+                            </div>
+                            <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold ${isDark ? 'bg-cyan-500/20 text-cyan-300' : 'bg-blue-100 text-blue-700'}`}>
+                                {isEnglish ? 'Open Archive' : 'Arsivi Ac'}
+                                <ChevronRight size={16} />
+                            </span>
+                        </div>
                     </Link>
 
                     <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mt-8">

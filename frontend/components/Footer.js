@@ -18,6 +18,7 @@ const footerSections = [
             { label: 'Arena', href: '/arena' },
             { label: 'Agents', href: '/agents' },
             { label: 'Blog', href: '/blog' },
+            { label: 'Blog Archive', href: '/blog/archive' },
         ],
     },
     {

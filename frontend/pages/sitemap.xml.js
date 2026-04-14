@@ -121,7 +121,7 @@ function buildSitemapXml(staticPaths, posts, debugInfo = null) {
 }
 
 export async function getServerSideProps({ res, query }) {
-    const staticPaths = ['/', '/arena', '/agents', '/blog'];
+    const staticPaths = ['/', '/arena', '/agents', '/blog', '/blog/categories', '/blog/tech-news', '/blog/archive'];
     let posts = [];
     const debugEnabled = query?.debug === '1' || query?.debug === 'true';
     const staticUrls = buildStaticUrls(staticPaths);

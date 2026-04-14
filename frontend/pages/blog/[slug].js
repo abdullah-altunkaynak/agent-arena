@@ -21,20 +21,23 @@ import Navbar from '../../components/Navbar';
 
 const BLOG_API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
 
-export default function BlogPostPage() {
+export default function BlogPostPage({
+    initialPost = null,
+    initialRelatedPosts = [],
+    initialPopularPosts = [],
+}) {
     const router = useRouter();
     const { slug } = router.query;
-    const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
 
     const API_BASE = BLOG_API_BASE;
     const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
 
     // State
-    const [post, setPost] = useState(null);
-    const [relatedPosts, setRelatedPosts] = useState([]);
-    const [popularPosts, setPopularPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [post, setPost] = useState(initialPost);
+    const [relatedPosts, setRelatedPosts] = useState(initialRelatedPosts);
+    const [popularPosts, setPopularPosts] = useState(initialPopularPosts);
+    const [loading, setLoading] = useState(!initialPost);
     const [error, setError] = useState(null);
     const [newsletterEmail, setNewsletterEmail] = useState('');
     const [newsletterMessage, setNewsletterMessage] = useState('');
@@ -48,7 +51,6 @@ export default function BlogPostPage() {
     useEffect(() => {
         if (!router.isReady) return;
 
-        setMounted(true);
         const queryLang = typeof router.query.lang === 'string' ? normalizeLang(router.query.lang) : null;
         const savedLang = normalizeLang(localStorage.getItem('blogLanguage'));
         const selectedLang = queryLang || savedLang;
@@ -115,9 +117,15 @@ export default function BlogPostPage() {
         fetchPost();
     }, [slug]);
 
-    if (!mounted) return null;
+    useEffect(() => {
+        if (!initialPost) return;
+        setPost(initialPost);
+        setRelatedPosts(initialRelatedPosts);
+        setPopularPosts(initialPopularPosts);
+        setLoading(false);
+    }, [initialPost, initialRelatedPosts, initialPopularPosts]);
 
-    if (loading) {
+    if (loading && !post) {
         return (
             <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'} flex items-center justify-center`}>
                 <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${isDark ? 'border-cyan-400' : 'border-blue-600'}`}></div>
@@ -627,15 +635,15 @@ export async function getServerSideProps(context) {
     }
 
     try {
-        const response = await fetch(
+        const resolveResponse = await fetch(
             `${BLOG_API_BASE}/posts/resolve-slug/${encodeURIComponent(slug)}`
         );
 
-        if (!response.ok) {
-            return { props: {} };
+        if (!resolveResponse.ok) {
+            return { props: { initialPost: null, initialRelatedPosts: [], initialPopularPosts: [] } };
         }
 
-        const resolved = await response.json();
+        const resolved = await resolveResponse.json();
         if (!resolved?.found) {
             return { notFound: true };
         }
@@ -650,9 +658,32 @@ export async function getServerSideProps(context) {
                 },
             };
         }
-    } catch (error) {
-        // Keep page render resilient if API is temporarily unavailable.
-    }
 
-    return { props: {} };
+        const postResponse = await fetch(`${BLOG_API_BASE}/posts/slug/${encodeURIComponent(slug)}`);
+        if (!postResponse.ok) {
+            return { props: { initialPost: null, initialRelatedPosts: [], initialPopularPosts: [] } };
+        }
+
+        const initialPost = await postResponse.json();
+
+        const relatedPosts = initialPost?.category_id
+            ? await fetch(`${BLOG_API_BASE}/posts?category_id=${initialPost.category_id}&page_size=3`).then((r) => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }))
+            : { items: [] };
+
+        const popularPosts = await fetch(`${BLOG_API_BASE}/posts?status=published&page_size=10`).then((r) => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }));
+
+        const sortedPopular = (popularPosts?.items || [])
+            .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+            .slice(0, 5);
+
+        return {
+            props: {
+                initialPost,
+                initialRelatedPosts: (relatedPosts?.items || []).filter((p) => p.id !== initialPost.id).slice(0, 3),
+                initialPopularPosts: sortedPopular,
+            },
+        };
+    } catch (error) {
+        return { props: { initialPost: null, initialRelatedPosts: [], initialPopularPosts: [] } };
+    }
 }

@@ -7,12 +7,12 @@ import Navbar from '../../components/Navbar';
 
 export default function BlogCategoriesPage() {
     const router = useRouter();
-    const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
     const [loading, setLoading] = useState(true);
     const [categoryStats, setCategoryStats] = useState([]);
 
     const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
+    const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
     const isDark = true;
     const isEnglish = language === 'en';
     const normalizeLang = (value) => (value === 'tr' ? 'tr' : 'en');
@@ -39,7 +39,6 @@ export default function BlogCategoriesPage() {
     useEffect(() => {
         if (!router.isReady) return;
 
-        setMounted(true);
         const queryLang = typeof router.query.lang === 'string' ? normalizeLang(router.query.lang) : null;
         const savedLang = normalizeLang(localStorage.getItem('blogLanguage'));
         const selectedLang = queryLang || savedLang;
@@ -60,7 +59,7 @@ export default function BlogCategoriesPage() {
     }, [router.isReady, router.query.lang]);
 
     useEffect(() => {
-        if (!mounted) return;
+        if (!router.isReady) return;
 
         const fetchCategoryData = async () => {
             setLoading(true);
@@ -125,9 +124,11 @@ export default function BlogCategoriesPage() {
         };
 
         fetchCategoryData();
-    }, [mounted, API_BASE]);
+    }, [router.isReady, API_BASE]);
 
-    if (!mounted) return null;
+    const canonicalUrl = `${SITE_URL}/blog/categories`;
+    const hreflangTrUrl = `${SITE_URL}/blog/categories?lang=tr`;
+    const hreflangEnUrl = `${SITE_URL}/blog/categories?lang=en`;
 
     const getCategoryName = (cat) =>
         isEnglish
@@ -151,6 +152,15 @@ export default function BlogCategoriesPage() {
             <Head>
                 <title>{trans.title}</title>
                 <meta name="description" content={trans.subtitle} />
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Agent Arena" />
+                <meta property="og:title" content={trans.title} />
+                <meta property="og:description" content={trans.subtitle} />
+                <meta property="og:url" content={canonicalUrl} />
+                <link rel="canonical" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="tr" href={hreflangTrUrl} />
+                <link rel="alternate" hrefLang="en" href={hreflangEnUrl} />
+                <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
             </Head>
 
             <Navbar />

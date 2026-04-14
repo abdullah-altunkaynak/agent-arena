@@ -7,13 +7,13 @@ import Navbar from '../../components/Navbar';
 
 export default function TechNewsPage() {
     const router = useRouter();
-    const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
     const [loading, setLoading] = useState(true);
     const [posts, setPosts] = useState([]);
     const [category, setCategory] = useState(null);
 
     const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
+    const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
     const isDark = true;
     const isEnglish = language === 'en';
 
@@ -45,7 +45,6 @@ export default function TechNewsPage() {
     useEffect(() => {
         if (!router.isReady) return;
 
-        setMounted(true);
         const queryLang = typeof router.query.lang === 'string' ? normalizeLang(router.query.lang) : null;
         const savedLang = normalizeLang(localStorage.getItem('blogLanguage'));
         const selectedLang = queryLang || savedLang;
@@ -66,7 +65,7 @@ export default function TechNewsPage() {
     }, [router.isReady, router.query.lang]);
 
     useEffect(() => {
-        if (!mounted) return;
+        if (!router.isReady) return;
 
         const fetchTechNews = async () => {
             setLoading(true);
@@ -131,9 +130,7 @@ export default function TechNewsPage() {
         };
 
         fetchTechNews();
-    }, [mounted, API_BASE]);
-
-    if (!mounted) return null;
+    }, [router.isReady, API_BASE]);
 
     const getPostTitle = (post) => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostExcerpt = (post) => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
@@ -148,6 +145,18 @@ export default function TechNewsPage() {
             <Head>
                 <title>{trans.title}</title>
                 <meta name="description" content={trans.subtitle} />
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Agent Arena" />
+                <meta property="og:title" content={trans.title} />
+                <meta property="og:description" content={trans.subtitle} />
+                <meta property="og:url" content={`${SITE_URL}/blog/tech-news`} />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={trans.title} />
+                <meta name="twitter:description" content={trans.subtitle} />
+                <link rel="canonical" href={`${SITE_URL}/blog/tech-news`} />
+                <link rel="alternate" hrefLang="tr" href={`${SITE_URL}/blog/tech-news?lang=tr`} />
+                <link rel="alternate" hrefLang="en" href={`${SITE_URL}/blog/tech-news?lang=en`} />
+                <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/blog/tech-news`} />
             </Head>
 
             <Navbar />
