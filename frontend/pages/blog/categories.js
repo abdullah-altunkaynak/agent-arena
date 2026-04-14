@@ -126,9 +126,11 @@ export default function BlogCategoriesPage() {
         fetchCategoryData();
     }, [router.isReady, API_BASE]);
 
-    const canonicalUrl = `${SITE_URL}/blog/categories`;
+    const langForSeo = normalizeLang(typeof router.query.lang === 'string' ? router.query.lang : language);
+    const canonicalUrl = `${SITE_URL}/blog/categories?lang=${langForSeo}`;
     const hreflangTrUrl = `${SITE_URL}/blog/categories?lang=tr`;
     const hreflangEnUrl = `${SITE_URL}/blog/categories?lang=en`;
+    const defaultUrl = `${SITE_URL}/blog/categories`;
 
     const getCategoryName = (cat) =>
         isEnglish
@@ -160,7 +162,7 @@ export default function BlogCategoriesPage() {
                 <link rel="canonical" href={canonicalUrl} />
                 <link rel="alternate" hrefLang="tr" href={hreflangTrUrl} />
                 <link rel="alternate" hrefLang="en" href={hreflangEnUrl} />
-                <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="x-default" href={defaultUrl} />
             </Head>
 
             <Navbar />

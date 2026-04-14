@@ -316,9 +316,11 @@ export default function BlogPage() {
             || nameAny === 'teknoloji haberleri';
     });
     const hasCategoryIcon = (cat) => typeof cat?.icon === 'string' && cat.icon.trim().length > 0;
-    const canonicalUrl = `${SITE_URL}/blog`;
+    const langForSeo = normalizeLang(typeof router.query.lang === 'string' ? router.query.lang : language);
+    const canonicalUrl = `${SITE_URL}/blog?lang=${langForSeo}`;
     const hreflangTrUrl = `${SITE_URL}/blog?lang=tr`;
     const hreflangEnUrl = `${SITE_URL}/blog?lang=en`;
+    const defaultUrl = `${SITE_URL}/blog`;
     const blogBreadcrumbJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -351,7 +353,7 @@ export default function BlogPage() {
                 <link rel="canonical" href={canonicalUrl} />
                 <link rel="alternate" hrefLang="tr" href={hreflangTrUrl} />
                 <link rel="alternate" hrefLang="en" href={hreflangEnUrl} />
-                <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="x-default" href={defaultUrl} />
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(blogBreadcrumbJsonLd) }}

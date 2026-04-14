@@ -229,9 +229,11 @@ export default function BlogPostPage({
     const rawDescription = getPostExcerpt() || stripMarkdown(getPostContent());
     const seoTitle = truncateText(`${rawTitle} | Agent Arena Blog`, 60);
     const seoDescription = truncateText(rawDescription || rawTitle, 160);
-    const canonicalUrl = `${SITE_URL}/blog/${safeSlug}`;
+    const langForSeo = normalizeLang(typeof router.query.lang === 'string' ? router.query.lang : language);
+    const canonicalUrl = `${SITE_URL}/blog/${safeSlug}?lang=${langForSeo}`;
     const hreflangTrUrl = `${SITE_URL}/blog/${safeSlug}?lang=tr`;
     const hreflangEnUrl = `${SITE_URL}/blog/${safeSlug}?lang=en`;
+    const defaultUrl = `${SITE_URL}/blog/${safeSlug}`;
     const defaultOgImage = process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE || `${SITE_URL}/og-default.png`;
     const seoImage = post.featured_image_url || defaultOgImage;
     const publishedAt = post.published_at || post.created_at || new Date().toISOString();
@@ -367,7 +369,7 @@ export default function BlogPostPage({
                 <link rel="canonical" href={canonicalUrl} />
                 <link rel="alternate" hrefLang="tr" href={hreflangTrUrl} />
                 <link rel="alternate" hrefLang="en" href={hreflangEnUrl} />
-                <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="x-default" href={defaultUrl} />
 
                 <meta property="og:type" content="article" />
                 <meta property="og:site_name" content="Agent Arena" />

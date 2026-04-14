@@ -139,6 +139,11 @@ export default function TechNewsPage() {
         const parsed = Number(raw);
         return Number.isFinite(parsed) ? parsed : 0;
     };
+    const langForSeo = normalizeLang(typeof router.query.lang === 'string' ? router.query.lang : language);
+    const canonicalUrl = `${SITE_URL}/blog/tech-news?lang=${langForSeo}`;
+    const hreflangTrUrl = `${SITE_URL}/blog/tech-news?lang=tr`;
+    const hreflangEnUrl = `${SITE_URL}/blog/tech-news?lang=en`;
+    const defaultUrl = `${SITE_URL}/blog/tech-news`;
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
@@ -149,14 +154,14 @@ export default function TechNewsPage() {
                 <meta property="og:site_name" content="Agent Arena" />
                 <meta property="og:title" content={trans.title} />
                 <meta property="og:description" content={trans.subtitle} />
-                <meta property="og:url" content={`${SITE_URL}/blog/tech-news`} />
+                <meta property="og:url" content={canonicalUrl} />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content={trans.title} />
                 <meta name="twitter:description" content={trans.subtitle} />
-                <link rel="canonical" href={`${SITE_URL}/blog/tech-news`} />
-                <link rel="alternate" hrefLang="tr" href={`${SITE_URL}/blog/tech-news?lang=tr`} />
-                <link rel="alternate" hrefLang="en" href={`${SITE_URL}/blog/tech-news?lang=en`} />
-                <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/blog/tech-news`} />
+                <link rel="canonical" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="tr" href={hreflangTrUrl} />
+                <link rel="alternate" hrefLang="en" href={hreflangEnUrl} />
+                <link rel="alternate" hrefLang="x-default" href={defaultUrl} />
             </Head>
 
             <Navbar />
