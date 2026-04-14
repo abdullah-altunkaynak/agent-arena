@@ -204,6 +204,11 @@ export default function BlogPostPage({
             .trim();
     };
 
+    // Page title already uses H1. Demote markdown H1 headings to H2 for semantic SEO structure.
+    const markdownComponents = {
+        h1: ({ node, ...props }) => <h2 {...props} />,
+    };
+
     const truncateText = (text, maxLen) => {
         const clean = String(text || '').trim();
         if (clean.length <= maxLen) return clean;
@@ -510,13 +515,13 @@ export default function BlogPostPage({
                             {/* Excerpt */}
                             {(isEnglish ? post.excerpt_en : post.excerpt_tr) && (
                                 <div className={`prose prose-lg max-w-none mb-8 ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700'} prose-p:my-0 prose-ul:my-2 prose-ol:my-2`}>
-                                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>{normalizedPostExcerpt}</ReactMarkdown>
+                                    <ReactMarkdown components={markdownComponents} rehypePlugins={[rehypeRaw, rehypeSanitize]}>{normalizedPostExcerpt}</ReactMarkdown>
                                 </div>
                             )}
 
                             {/* Content */}
                             <div className={`prose max-w-none ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-strong:text-white prose-li:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300 prose-code:text-cyan-300 prose-pre:bg-slate-800 prose-blockquote:border-cyan-500 prose-blockquote:text-slate-400' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-strong:text-slate-900 prose-li:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-code:text-blue-700 prose-pre:bg-slate-100 prose-blockquote:border-blue-600 prose-blockquote:text-slate-700'} prose-img:rounded-lg prose-img:w-full`}>
-                                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>{normalizedPostContent}</ReactMarkdown>
+                                <ReactMarkdown components={markdownComponents} rehypePlugins={[rehypeRaw, rehypeSanitize]}>{normalizedPostContent}</ReactMarkdown>
                             </div>
 
                             {/* Newsletter Subscription */}
