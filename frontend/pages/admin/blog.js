@@ -289,6 +289,7 @@ const BlogAdminDashboard = () => {
     return (
         <>
             <Head>
+                <title>Blog Admin Dashboard | Agent Arena</title>
                 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
                 <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet" />
             </Head>

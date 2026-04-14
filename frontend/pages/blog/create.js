@@ -171,6 +171,7 @@ export default function CreatePostPage() {
     return (
         <>
             <Head>
+                <title>Create Post | Agent Arena Blog Admin</title>
                 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
                 <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet" />
             </Head>

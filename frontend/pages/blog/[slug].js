@@ -44,6 +44,9 @@ export default function BlogPostPage({
     const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
     const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
+    const slugFromRoute = typeof slug === 'string' ? slug : '';
+    const safeSlug = initialPost?.slug || slugFromRoute || 'post';
+
     const isDark = true;
     const isEnglish = language === 'en';
     const normalizeLang = (value) => (value === 'tr' ? 'tr' : 'en');
@@ -127,22 +130,34 @@ export default function BlogPostPage({
 
     if (loading && !post) {
         return (
-            <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'} flex items-center justify-center`}>
-                <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${isDark ? 'border-cyan-400' : 'border-blue-600'}`}></div>
-            </div>
+            <>
+                <Head>
+                    <title>Loading Post | Agent Arena Blog</title>
+                    <meta name="description" content="Loading blog post content." />
+                </Head>
+                <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'} flex items-center justify-center`}>
+                    <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${isDark ? 'border-cyan-400' : 'border-blue-600'}`}></div>
+                </div>
+            </>
         );
     }
 
     if (error || !post) {
         return (
-            <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'} flex items-center justify-center`}>
-                <div className="text-center">
-                    <h1 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Post not found</h1>
-                    <Link href="/blog" className={isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-700'}>
-                        ← Back to Blog
-                    </Link>
+            <>
+                <Head>
+                    <title>Post Not Found | Agent Arena Blog</title>
+                    <meta name="description" content="The requested blog post could not be found." />
+                </Head>
+                <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'} flex items-center justify-center`}>
+                    <div className="text-center">
+                        <h1 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Post not found</h1>
+                        <Link href="/blog" className={isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-700'}>
+                            ← Back to Blog
+                        </Link>
+                    </div>
                 </div>
-            </div>
+            </>
         );
     }
 
@@ -209,9 +224,9 @@ export default function BlogPostPage({
     const rawDescription = getPostExcerpt() || stripMarkdown(getPostContent());
     const seoTitle = truncateText(`${rawTitle} | Agent Arena Blog`, 60);
     const seoDescription = truncateText(rawDescription || rawTitle, 160);
-    const canonicalUrl = `${SITE_URL}/blog/${slug}`;
-    const hreflangTrUrl = `${SITE_URL}/blog/${slug}?lang=tr`;
-    const hreflangEnUrl = `${SITE_URL}/blog/${slug}?lang=en`;
+    const canonicalUrl = `${SITE_URL}/blog/${safeSlug}`;
+    const hreflangTrUrl = `${SITE_URL}/blog/${safeSlug}?lang=tr`;
+    const hreflangEnUrl = `${SITE_URL}/blog/${safeSlug}?lang=en`;
     const defaultOgImage = process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE || `${SITE_URL}/og-default.png`;
     const seoImage = post.featured_image_url || defaultOgImage;
     const publishedAt = post.published_at || post.created_at || new Date().toISOString();
