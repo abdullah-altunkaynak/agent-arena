@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { MessageSquare, SendHorizonal, Sparkles, LoaderCircle } from "lucide-react";
+import { MessageSquare, SendHorizonal, Sparkles } from "lucide-react";
 
 const INITIAL_ASSISTANT_MESSAGE = {
     role: "assistant",
@@ -70,7 +70,7 @@ export default function AIChatSection() {
                             <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-1">Featured capability</p>
                             <h2 className="font-display font-bold text-2xl text-spark flex items-center gap-2">
                                 <MessageSquare size={22} className="text-cyan-400" />
-                                AI Chat powered by Groq
+                                AI Chat powered by AgentArena
                             </h2>
                             <p className="text-wire text-sm mt-2">
                                 Ask anything about Agent Arena, technology, artificial intelligence, agents, and our latest blog insights.
@@ -99,9 +99,17 @@ export default function AIChatSection() {
                             </div>
                         ))}
                         {loading && (
-                            <div className="flex items-center gap-2 text-cyan-400 text-sm font-mono">
-                                <LoaderCircle size={14} className="animate-spin" />
-                                Thinking...
+                            <div className="w-full flex justify-start">
+                                <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm border bg-forge border-[rgba(255,255,255,.08)] text-wire">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-mono text-cyan-400">AgentArena is typing</span>
+                                        <div className="flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0.15s" }} />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0.3s" }} />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

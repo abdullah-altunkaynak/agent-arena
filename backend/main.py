@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from engine.synapse import router as synapse_router
 from agents.router import router as agents_router
+from chat.router import router as chat_router
 
 # Conditionally import blog router if available (private module)
 try:
@@ -38,6 +39,7 @@ async def health_check():
 
 app.include_router(synapse_router, prefix="/api/arena", tags=["Arena"])
 app.include_router(agents_router, prefix="/api/agents", tags=["Agents"])
+app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
 
 # Include blog router only if private blog module is available
 if blog_available:

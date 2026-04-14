@@ -22,7 +22,7 @@ export default function TechNewsPage() {
     const t = useMemo(() => ({
         en: {
             title: 'Tech News',
-            subtitle: 'All Tech News posts sorted from newest to oldest',
+            subtitle: 'Agent Arena Tech News features the latest news and fantastic articles curated by following the most renowned technology writers.',
             back: 'Back to Blog',
             empty: 'No Tech News posts found yet.',
             readMore: 'Read More',
@@ -31,7 +31,7 @@ export default function TechNewsPage() {
         },
         tr: {
             title: 'Teknoloji Haberleri',
-            subtitle: 'Tech News kategorisine ait tum yazilar yeni tarihten eskiye listelenir',
+            subtitle: 'En güncel haberler, en bilindik teknoloji yazarlarını takip ederek oluşturulan muhteşem yazılar Agent Arena Teknoloji Haberlerinde.',
             back: 'Bloga Don',
             empty: 'Henuz Tech News yazisi bulunamadi.',
             readMore: 'Devamini Oku',
