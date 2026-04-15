@@ -1,5 +1,6 @@
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me';
+const BLOG_LANGS = ['en', 'tr'];
 
 function logSitemap(message, details) {
     if (typeof details === 'undefined') {
@@ -84,10 +85,20 @@ function buildStaticUrls(staticPaths) {
     return staticPaths.map((path) => `${SITE_URL}${path}`);
 }
 
+function buildLocalizedBlogStaticUrls() {
+    const localizedBlogPaths = ['/blog', '/blog/categories', '/blog/tech-news', '/blog/archive'];
+
+    return localizedBlogPaths.flatMap((path) =>
+        BLOG_LANGS.map((lang) => `${SITE_URL}${path}?lang=${lang}`)
+    );
+}
+
 function buildPostUrls(posts) {
     return posts
         .filter((post) => post?.slug)
-        .map((post) => `${SITE_URL}/blog/${post.slug}`);
+        .flatMap((post) =>
+            BLOG_LANGS.map((lang) => `${SITE_URL}/blog/${post.slug}?lang=${lang}`)
+        );
 }
 
 function buildSitemapXml(staticPaths, posts, debugInfo = null) {
@@ -96,11 +107,17 @@ function buildSitemapXml(staticPaths, posts, debugInfo = null) {
         buildUrlEntry(`${SITE_URL}${path}`, now, path === '/' ? '1.0' : '0.8', 'weekly')
     );
 
+    const localizedBlogStaticEntries = buildLocalizedBlogStaticUrls().map((url) =>
+        buildUrlEntry(url, now, '0.8', 'weekly')
+    );
+
     const postEntries = posts
         .filter((post) => post?.slug)
-        .map((post) => {
+        .flatMap((post) => {
             const updatedAt = post.updated_at || post.published_at || post.created_at || now;
-            return buildUrlEntry(`${SITE_URL}/blog/${post.slug}`, updatedAt, '0.8', 'weekly');
+            return BLOG_LANGS.map((lang) =>
+                buildUrlEntry(`${SITE_URL}/blog/${post.slug}?lang=${lang}`, updatedAt, '0.8', 'weekly')
+            );
         });
 
     const debugComments = debugInfo
@@ -115,13 +132,14 @@ function buildSitemapXml(staticPaths, posts, debugInfo = null) {
         ...debugComments,
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
         ...staticEntries,
+        ...localizedBlogStaticEntries,
         ...postEntries,
         '</urlset>',
     ].join('');
 }
 
 export async function getServerSideProps({ res, query }) {
-    const staticPaths = ['/', '/arena', '/agents', '/blog', '/blog/categories', '/blog/tech-news', '/blog/archive'];
+    const staticPaths = ['/', '/arena', '/agents'];
     let posts = [];
     const debugEnabled = query?.debug === '1' || query?.debug === 'true';
     const staticUrls = buildStaticUrls(staticPaths);
