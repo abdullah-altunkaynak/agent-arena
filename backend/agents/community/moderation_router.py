@@ -2,7 +2,7 @@
 Moderation Tools API Routes
 Handle thread/comment moderation, reporting, and community management
 """
-from fastapi import APIRouter, HTTPException, status, Header, Depends, Query
+from fastapi import APIRouter, HTTPException, status, Header, Depends, Query, Body
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime

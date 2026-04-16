@@ -1,7 +1,7 @@
 """
 Communities and Categories API Routes
 """
-from fastapi import APIRouter, HTTPException, status, Header, Depends, Query
+from fastapi import APIRouter, HTTPException, status, Header, Depends, Query, Body
 from pydantic import BaseModel, validator, Field
 from typing import Optional, List
 from sqlalchemy.orm import Session
@@ -240,9 +240,9 @@ async def get_community(community_id: str):
 
 @router.post("/communities", response_model=CommunityResponse, status_code=status.HTTP_201_CREATED)
 async def create_community(
-    name: str,
-    description: Optional[str] = None,
-    is_public: bool = True,
+    name: str = Body(...),
+    description: Optional[str] = Body(None),
+    is_public: bool = Body(True),
     current_user_id: str = Depends(get_current_user_id),
 ):
     """
