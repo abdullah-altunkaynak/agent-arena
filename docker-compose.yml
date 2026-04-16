@@ -1,27 +1,108 @@
 version: "3.8"
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:13-alpine
+    container_name: agent-arena-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-agentarena}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword123}
+      POSTGRES_DB: ${DB_NAME:-agent_arena}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-agentarena}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agent-arena-net
+
+  # Backend API
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: agent-arena-backend
+    restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "10000:10000"
+    expose:
+      - "10000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
     environment:
-      - PYTHONPATH=/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/backend
+      - DATABASE_URL=postgresql://${DB_USER:-agentarena}:${DB_PASSWORD:-securepassword123}@postgres:5432/${DB_NAME:-agent_arena}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:3000", "http://localhost:3001"]}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - agent-arena-net
 
+  # Frontend Application
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: agent-arena-frontend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/.next
     environment:
-      - NEXT_PUBLIC_API_URL=https://api.agentarena.me
-    command: npm run dev
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:10000}
+      - NODE_ENV=${NODE_ENV:-development}
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - agent-arena-net
+
+  # Nginx Reverse Proxy (Optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: agent-arena-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - agent-arena-net
+    profiles:
+      - prod
+
+networks:
+  agent-arena-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

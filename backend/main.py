@@ -2,15 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import os
+from pathlib import Path
 
-# Add blog module to path (private/proprietary system)
-sys.path.insert(0, os.path.dirname(__file__))
+# Add backend module to path for deployment flexibility
+BACKEND_DIR = Path(__file__).parent
+sys.path.insert(0, str(BACKEND_DIR))
+sys.path.insert(0, str(BACKEND_DIR.parent))
 
 from engine.synapse import router as synapse_router
 from agents.router import router as agents_router
 from chat.router import router as chat_router
 from agents.community import community_router, threads_router, comments_router, moderation_router
-from agents.community import community_router, threads_router, comments_router
 
 # Conditionally import blog router if available (private module)
 try:

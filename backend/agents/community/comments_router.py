@@ -7,8 +7,8 @@ from typing import Optional, List
 from datetime import datetime
 import uuid
 
-from backend.auth.utils import JWTHandler
-from backend.blog.database import SupabaseClient
+from ...auth.utils import JWTHandler
+from ...blog.database import SupabaseClient
 
 router = APIRouter(prefix="/api/comments", tags=["comments"])
 db_client = SupabaseClient()
