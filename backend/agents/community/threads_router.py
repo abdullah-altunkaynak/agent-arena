@@ -10,10 +10,10 @@ import re
 
 from engine.community_models import Thread, Comment, User
 from auth.utils import JWTHandler
-from blog.database import SupabaseClient
+from blog.database import BlogDatabaseService
 
 router = APIRouter(prefix="/api/threads", tags=["threads"])
-db_client = SupabaseClient()
+db_client = BlogDatabaseService()
 
 
 # Pydantic Models for responses

@@ -8,10 +8,10 @@ from datetime import datetime
 import uuid
 
 from auth.utils import JWTHandler
-from blog.database import SupabaseClient
+from blog.database import BlogDatabaseService
 
 router = APIRouter(prefix="/api/comments", tags=["comments"])
-db_client = SupabaseClient()
+db_client = BlogDatabaseService()
 
 
 # Pydantic Models
