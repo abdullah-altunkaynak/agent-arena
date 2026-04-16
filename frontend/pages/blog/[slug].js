@@ -21,9 +21,11 @@ import rehypeSanitize from 'rehype-sanitize';
 import Navbar from '../../components/Navbar';
 import { getCachedResponse, setCachedResponse, getCacheKey } from '../../lib/cache';
 
-const BLOG_API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-    ? '/api/blog'
-    : (process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/blog`);
+const BLOG_API_BASE = typeof window !== 'undefined'
+    ? (window.location.hostname === 'localhost' ? '/api/blog' : `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/blog`)
+    : (process.env.NODE_ENV === 'development'
+        ? 'http://127.0.0.1:10000/api/blog'
+        : `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/blog`);
 
 export default function BlogPostPage({
     initialPost = null,

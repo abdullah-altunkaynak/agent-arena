@@ -158,7 +158,7 @@ export default function BlogArchivePage({ posts = [], page = 1, totalPages = 1, 
     );
 }
 
-export async function getServerSideProps({ query }) {
+export async function getServerSideProps({ query, req }) {
     const rawPage = Array.isArray(query?.page) ? query.page[0] : query?.page;
     const page = Math.max(parseInt(rawPage || '1', 10) || 1, 1);
     const language = query?.lang === 'tr' ? 'tr' : 'en';
@@ -170,7 +170,12 @@ export async function getServerSideProps({ query }) {
             page_size: String(PAGE_SIZE),
         });
 
-        const response = await fetch(`${BLOG_API_BASE}/posts?${params}`);
+        // Use relative path when running on server, absolute when client
+        const apiUrl = process.env.NODE_ENV === 'development'
+            ? `http://127.0.0.1:10000/api/blog/posts?${params}`
+            : `https://api.agentarena.me/api/blog/posts?${params}`;
+
+        const response = await fetch(apiUrl);
         if (!response.ok) {
             return { props: { posts: [], page, totalPages: 1, language } };
         }
@@ -181,6 +186,7 @@ export async function getServerSideProps({ query }) {
 
         return { props: { posts, page, totalPages, language } };
     } catch (error) {
+        console.error('Archive fetch error:', error);
         return { props: { posts: [], page, totalPages: 1, language } };
     }
 }
