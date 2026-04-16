@@ -4,9 +4,9 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const localApiBase = 'http://127.0.0.1:8000/api/v1/blog';
+    const localApiBase = 'http://127.0.0.1:10000/api/blog';
     const remoteApiBase = process.env.NEXT_PUBLIC_BLOG_API_URL
-        || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
+        || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/blog`;
     const apiBase = process.env.NODE_ENV === 'development' ? localApiBase : remoteApiBase;
 
     const targetUrl = new URL(`${apiBase}/categories`);

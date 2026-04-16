@@ -13,7 +13,7 @@ export default function BlogCategoriesPage() {
 
     const API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost'
         ? '/api/blog'
-        : (process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`);
+        : (process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/blog`);
     const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
     const isDark = true;
     const isEnglish = language === 'en';

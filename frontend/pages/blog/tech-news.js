@@ -13,7 +13,7 @@ export default function TechNewsPage() {
     const [posts, setPosts] = useState([]);
     const [category, setCategory] = useState(null);
 
-    const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
+    const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/blog`;
     const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
     const isDark = true;
     const isEnglish = language === 'en';

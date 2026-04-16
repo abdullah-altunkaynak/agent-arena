@@ -48,7 +48,7 @@ async function fetchPublishedPosts() {
             page_size: '100',
         });
 
-        const requestUrl = `${API_BASE}/api/v1/blog/posts?${params.toString()}`;
+        const requestUrl = `${API_BASE}/api/blog/posts?${params.toString()}`;
         logSitemap('fetching posts page', { page, requestUrl });
 
         const res = await fetch(requestUrl);

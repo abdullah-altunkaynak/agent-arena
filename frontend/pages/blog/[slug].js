@@ -23,7 +23,7 @@ import { getCachedResponse, setCachedResponse, getCacheKey } from '../../lib/cac
 
 const BLOG_API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost'
     ? '/api/blog'
-    : (process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`);
+    : (process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/blog`);
 
 export default function BlogPostPage({
     initialPost = null,
@@ -218,16 +218,23 @@ export default function BlogPostPage({
     // Page title already uses H1. Demote markdown H1 headings to H2 for semantic SEO structure.
     const markdownComponents = {
         h1: ({ node, ...props }) => <h2 {...props} />,
-        a: ({ node, href, children, ...props }) => (
-            <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                {...props}
-            >
-                {children}
-            </a>
-        ),
+        a: ({ node, href, children, ...props }) => {
+            const isInternal = href?.startsWith('/');
+            return isInternal ? (
+                <Link href={href}>
+                    <a {...props}>{children}</a>
+                </Link>
+            ) : (
+                <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    {...props}
+                >
+                    {children}
+                </a>
+            );
+        },
     };
 
     const truncateText = (text, maxLen) => {
