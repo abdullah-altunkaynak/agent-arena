@@ -19,6 +19,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import Navbar from '../../components/Navbar';
+import { normalizeBlogExcerptHtml } from '../../lib/blogContent';
 import { getCachedResponse, setCachedResponse, getCacheKey } from '../../lib/cache';
 
 const BLOG_API_BASE = typeof window !== 'undefined'
@@ -189,14 +190,9 @@ export default function BlogPostPage({
     const htmlAnchorsToMarkdown = (value) => {
         if (!value) return '';
 
-        return String(value)
-            .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, label) => {
-                const plainLabel = String(label).replace(/<[^>]+>/g, '').trim() || href;
-                return `[${plainLabel}](${href})`;
-            })
-            .replace(/<(?:b|strong)(?:\s[^>]*)?>([\s\S]*?)<\/(?:b|strong)>/gi, '**$1**')
-            .replace(/<(?:i|em)(?:\s[^>]*)?>([\s\S]*?)<\/(?:i|em)>/gi, '*$1*')
-            .replace(/<br\s*\/?>/gi, '\n');
+        return normalizeBlogExcerptHtml(
+            String(value).replace(/<br\s*\/?>/gi, '\n')
+        );
     };
 
     const normalizeMarkdownContent = (value) => {

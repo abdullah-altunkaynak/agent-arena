@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Calendar, ChevronRight, Newspaper } from 'lucide-react';
 import Navbar from '../../components/Navbar';
+import { normalizeBlogExcerptHtml } from '../../lib/blogContent';
 
 const BLOG_API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/blog`;
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
@@ -33,6 +34,7 @@ export default function BlogArchivePage({ posts = [], page = 1, totalPages = 1, 
 
     const getPostTitle = (post) => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostExcerpt = (post) => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
+    const getPostExcerptHtml = (post) => normalizeBlogExcerptHtml(getPostExcerpt(post));
     const getViewCount = (post) => Number(post?.view_count ?? post?.views ?? post?.viewCount ?? 0) || 0;
 
     return (
@@ -112,9 +114,10 @@ export default function BlogArchivePage({ posts = [], page = 1, totalPages = 1, 
                                     <h3 className={`text-lg md:text-xl font-bold mb-2 group-hover:text-cyan-400 transition ${isDark ? 'text-white' : 'text-slate-900'}`}>
                                         {getPostTitle(post)}
                                     </h3>
-                                    <p className={`text-sm line-clamp-2 mb-4 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                                        {getPostExcerpt(post)}
-                                    </p>
+                                    <div
+                                        className={`blog-excerpt text-sm line-clamp-2 mb-4 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+                                        dangerouslySetInnerHTML={{ __html: getPostExcerptHtml(post) }}
+                                    />
                                     <div className={`flex items-center justify-between text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                                         <div className="flex items-center gap-2">
                                             <Calendar size={12} />

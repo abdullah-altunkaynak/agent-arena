@@ -14,6 +14,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
+import { normalizeBlogExcerptHtml } from '../../lib/blogContent';
 
 export default function BlogPage() {
     const router = useRouter();
@@ -299,16 +300,7 @@ export default function BlogPage() {
         const parsed = Number(raw);
         return Number.isFinite(parsed) ? parsed : 0;
     };
-    const sanitizeHtmlContent = (html) => {
-        if (!html) return '';
-
-        return String(html)
-            .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
-            .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
-            .replace(/\son\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-            .replace(/javascript:/gi, '');
-    };
-    const getPostExcerptHtml = (post) => sanitizeHtmlContent(getPostExcerpt(post));
+    const getPostExcerptHtml = (post) => normalizeBlogExcerptHtml(getPostExcerpt(post));
     const getCategoryName = (cat) =>
         isEnglish
             ? (cat?.name_en || cat?.name_tr || cat?.name || 'Unnamed')
