@@ -218,6 +218,8 @@ class BlogDatabaseService:
             "id",
             "title_en",
             "title_tr",
+            "content_en",
+            "content_tr",
             "excerpt_en",
             "excerpt_tr",
             "slug",
@@ -228,7 +230,7 @@ class BlogDatabaseService:
             "published_at",
             "updated_at",
             "view_count",
-            "author",
+            "author_id",
         ]
 
         query = self.client.table("posts").select(", ".join(necessary_fields))
@@ -418,7 +420,7 @@ class BlogDatabaseService:
         self._check_connection()
         try:
             # Select only necessary fields
-            fields = ["id", "name_en", "name_tr", "icon", "created_at", "updated_at"]
+            fields = ["id", "name_en", "name_tr", "slug", "icon", "description_tr", "description_en", "created_at"]
             response = self.client.table("categories").select(", ".join(fields)).execute()
             categories = response.data if response.data else []
             normalized = [self._normalize_category_row(category) for category in categories]

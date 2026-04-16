@@ -4,6 +4,7 @@ Handles user registration, login, and token refresh
 """
 
 import uuid
+import sys
 from passlib.context import CryptContext
 from fastapi import APIRouter, HTTPException, status, Body
 from pydantic import BaseModel, EmailStr, Field
@@ -90,7 +91,6 @@ async def register(request: RegisterRequest = Body(...)):
             "avatar_url": None,
             "bio": None,
             "is_email_verified": False,
-            "role_id": None,  # Default role assigned by trigger
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
         }
@@ -121,7 +121,7 @@ async def register(request: RegisterRequest = Body(...)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Registration error: {e}")
+        print(f"REGISTRATION ERROR: {type(e).__name__}: {str(e)}", file=sys.stderr, flush=True)
         raise HTTPException(status_code=500, detail="Registration failed")
 
 

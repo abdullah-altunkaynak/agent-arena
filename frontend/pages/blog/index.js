@@ -18,7 +18,9 @@ import Navbar from '../../components/Navbar';
 export default function BlogPage() {
     const router = useRouter();
     const [language, setLanguage] = useState('en');
-    const API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
+    const API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+        ? '/api/blog'
+        : (process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`);
     const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
 
     const [featuredPost, setFeaturedPost] = useState(null);

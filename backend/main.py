@@ -53,4 +53,4 @@ app.include_router(moderation_router, tags=["Moderation"])
 
 # Include blog router only if private blog module is available
 if blog_available:
-    app.include_router(blog_router, prefix="/api/v1/blog", tags=["Blog"])
+    app.include_router(blog_router, prefix="/api/blog", tags=["Blog"])

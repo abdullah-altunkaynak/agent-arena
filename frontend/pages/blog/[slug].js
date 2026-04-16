@@ -21,7 +21,9 @@ import rehypeSanitize from 'rehype-sanitize';
 import Navbar from '../../components/Navbar';
 import { getCachedResponse, setCachedResponse, getCacheKey } from '../../lib/cache';
 
-const BLOG_API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
+const BLOG_API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? '/api/blog'
+    : (process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`);
 
 export default function BlogPostPage({
     initialPost = null,
@@ -216,6 +218,16 @@ export default function BlogPostPage({
     // Page title already uses H1. Demote markdown H1 headings to H2 for semantic SEO structure.
     const markdownComponents = {
         h1: ({ node, ...props }) => <h2 {...props} />,
+        a: ({ node, href, children, ...props }) => (
+            <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+            >
+                {children}
+            </a>
+        ),
     };
 
     const truncateText = (text, maxLen) => {
@@ -748,7 +760,6 @@ export async function getServerSideProps(context) {
                 initialRelatedPosts: (relatedPostsData?.items || []).filter((p) => p.id !== initialPost.id).slice(0, 3),
                 initialPopularPosts: sortedPopular,
             },
-            revalidate: 300, // ISR: Revalidate every 5 minutes
         };
     } catch (error) {
         console.error('Error in getServerSideProps:', error);

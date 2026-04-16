@@ -78,8 +78,8 @@ export default function Footer() {
                 <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-5 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
                     <p>Copyright 2026. AgentArena Creative Agency. All Right Reserved.</p>
                     <div className="flex items-center gap-4">
-                        <Link href="/" className="transition hover:text-cyan-300">Terms of Service</Link>
-                        <Link href="/" className="transition hover:text-cyan-300">Privacy Policy</Link>
+                        <Link href="/terms-of-service" className="transition hover:text-cyan-300">Terms of Service</Link>
+                        <Link href="/privacy-policy" className="transition hover:text-cyan-300">Privacy Policy</Link>
                     </div>
                 </div>
             </div>

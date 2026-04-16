@@ -203,7 +203,11 @@ export default function SignIn() {
                     {/* Footer */}
                     <p className="text-center text-gray-500 text-xs mt-6">
                         By signing in, you agree to our&nbsp;
-                        <Link href="/privacy" className="text-gray-400 hover:text-gray-300">
+                        <Link href="/terms-of-service" className="text-gray-400 hover:text-gray-300">
+                            Terms of Service
+                        </Link>
+                        &nbsp;and&nbsp;
+                        <Link href="/privacy-policy" className="text-gray-400 hover:text-gray-300">
                             Privacy Policy
                         </Link>
                     </p>
