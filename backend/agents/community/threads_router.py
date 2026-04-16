@@ -8,9 +8,9 @@ from datetime import datetime
 import uuid
 import re
 
-from ...engine.community_models import Thread, Comment, User
-from ...auth.utils import JWTHandler
-from ...blog.database import SupabaseClient
+from engine.community_models import Thread, Comment, User
+from auth.utils import JWTHandler
+from blog.database import SupabaseClient
 
 router = APIRouter(prefix="/api/threads", tags=["threads"])
 db_client = SupabaseClient()
