@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Users, MessageSquare, TrendingUp } from 'react-feather';
+import { Users, MessageSquare, TrendingUp } from 'lucide-react';
 
 /**
  * CommunityCard Component

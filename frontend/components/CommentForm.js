@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, AlertCircle } from 'react-feather';
+import { Send, AlertCircle } from 'lucide-react';
 
 /**
  * CommentForm Component

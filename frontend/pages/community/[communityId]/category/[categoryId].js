@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
-import { Plus, MessageSquare, Eye, Heart, ArrowUp, Clock } from 'react-feather';
+import { Plus, MessageSquare, Eye, Heart, ArrowUp, Clock } from 'lucide-react';
 
 export default function CategoryThreadsPage() {
     const router = useRouter();
@@ -200,8 +200,8 @@ export default function CategoryThreadsPage() {
                                     setSkip(0);
                                 }}
                                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${sortBy === 'recent'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-slate-800 text-gray-300 hover:text-white'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-800 text-gray-300 hover:text-white'
                                     }`}
                             >
                                 <Clock size={16} className="inline mr-2" />
@@ -213,8 +213,8 @@ export default function CategoryThreadsPage() {
                                     setSkip(0);
                                 }}
                                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${sortBy === 'trending'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-slate-800 text-gray-300 hover:text-white'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-800 text-gray-300 hover:text-white'
                                     }`}
                             >
                                 <ArrowUp size={16} className="inline mr-2" />

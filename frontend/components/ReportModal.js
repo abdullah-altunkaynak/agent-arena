@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle, Flag, CheckCircle, XCircle } from 'react-feather';
+import { AlertCircle, Flag, CheckCircle, XCircle } from 'lucide-react';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import { reportAPI } from '@/lib/moderationAPI';
@@ -158,8 +158,8 @@ export default function ReportModal({
                                     type="submit"
                                     disabled={loading || !reason}
                                     className={`flex-1 ${loading || !reason
-                                            ? 'bg-slate-700 cursor-not-allowed opacity-50'
-                                            : 'bg-red-600 hover:bg-red-700'
+                                        ? 'bg-slate-700 cursor-not-allowed opacity-50'
+                                        : 'bg-red-600 hover:bg-red-700'
                                         }`}
                                 >
                                     {loading ? 'Submitting...' : 'Submit Report'}

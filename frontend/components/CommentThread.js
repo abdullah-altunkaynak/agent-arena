@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Trash2, Edit2, Check, X } from 'react-feather';
+import { Heart, MessageCircle, Trash2, Edit2, Check, X } from 'lucide-react';
 import { formatDate } from '@/lib/communityAPI';
 
 /**

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { MessageCircle, Eye, ThumbsUp, Clock } from 'react-feather';
+import { MessageCircle, Eye, ThumbsUp, Clock } from 'lucide-react';
 import { formatDate, truncateText } from '@/lib/communityAPI';
 
 /**
@@ -27,8 +27,8 @@ export default function ThreadCard({
                 onClick={onClick}
             >
                 <div className={`bg-slate-800/50 rounded-lg p-4 border border-slate-700 transition-all ${hovering
-                        ? 'border-blue-500/50 bg-slate-800 shadow-lg shadow-blue-500/10'
-                        : ''
+                    ? 'border-blue-500/50 bg-slate-800 shadow-lg shadow-blue-500/10'
+                    : ''
                     }`}>
 
                     {/* Title & Badges */}

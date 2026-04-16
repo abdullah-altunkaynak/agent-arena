@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Trash2, Lock, Pin, AlertTriangle } from 'react-feather';
+import { Menu, Trash2, Lock, Pin, AlertTriangle } from 'lucide-react';
 import { threadModerationAPI, commentModerationAPI, warningAPI } from '@/lib/moderationAPI';
 import Button from '@/components/Button';
 
@@ -125,8 +125,8 @@ export default function ModerationMenu({
                                         onClick={() => handleAction(showReasonInput)}
                                         disabled={loading || !reason}
                                         className={`flex-1 text-xs ${loading || !reason
-                                                ? 'bg-slate-700 cursor-not-allowed opacity-50'
-                                                : 'bg-blue-600 hover:bg-blue-700'
+                                            ? 'bg-slate-700 cursor-not-allowed opacity-50'
+                                            : 'bg-blue-600 hover:bg-blue-700'
                                             }`}
                                     >
                                         Confirm

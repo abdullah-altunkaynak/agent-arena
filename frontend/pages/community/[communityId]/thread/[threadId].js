@@ -18,7 +18,7 @@ import {
     AlertCircle,
     CheckCircle,
     Eye,
-} from 'react-feather';
+} from 'lucide-react';
 
 export default function ThreadDetailPage() {
     const router = useRouter();
@@ -366,8 +366,8 @@ export default function ThreadDetailPage() {
                                     onClick={handleLike}
                                     disabled={liked}
                                     className={`flex items-center gap-2 flex-1 ${liked
-                                            ? 'bg-red-600/20 text-red-400 cursor-default'
-                                            : 'bg-slate-700 hover:bg-slate-600 text-gray-200'
+                                        ? 'bg-red-600/20 text-red-400 cursor-default'
+                                        : 'bg-slate-700 hover:bg-slate-600 text-gray-200'
                                         }`}
                                 >
                                     <Heart size={18} fill={liked ? 'currentColor' : 'none'} />

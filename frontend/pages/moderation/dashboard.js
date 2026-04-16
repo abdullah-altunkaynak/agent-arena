@@ -6,7 +6,7 @@ import Card from '@/components/Card';
 import Button from '@/components/Button';
 import { reportAPI, warningAPI } from '@/lib/moderationAPI';
 import { formatDate } from '@/lib/communityAPI';
-import { AlertCircle, CheckCircle, Clock, TrendingUp, Users } from 'react-feather';
+import { AlertCircle, CheckCircle, Clock, TrendingUp, Users } from 'lucide-react';
 
 export default function ModerationDashboard() {
     const [currentUser, setCurrentUser] = useState(null);
@@ -168,8 +168,8 @@ export default function ModerationDashboard() {
                         <button
                             onClick={() => setActiveTab('reports')}
                             className={`pb-3 px-4 font-medium transition-colors ${activeTab === 'reports'
-                                    ? 'text-blue-400 border-b-2 border-blue-400'
-                                    : 'text-gray-400 hover:text-gray-200'
+                                ? 'text-blue-400 border-b-2 border-blue-400'
+                                : 'text-gray-400 hover:text-gray-200'
                                 }`}
                         >
                             Reports
@@ -183,8 +183,8 @@ export default function ModerationDashboard() {
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
                                 className={`px-4 py-2 rounded-lg font-medium transition-all ${statusFilter === status
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
                                     }`}
                             >
                                 {status.charAt(0).toUpperCase() + status.slice(1)}
