@@ -13,12 +13,14 @@ import {
   Activity,
   BookOpen,
   Newspaper,
+  Users,
 } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/#ai-chat", label: "AI Chat", icon: MessageSquare },
   { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/blog/tech-news", label: "Tech News", icon: Newspaper },
+  { href: "/community", label: "Community", icon: Users },
   { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/arena", label: "Arena", icon: Zap },
   { href: "/agents", label: "Agents", icon: Bot },
@@ -92,7 +94,23 @@ export default function Navbar() {
           </div>
 
           {/* Right controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Login/Signup buttons */}
+            <div className="hidden md:flex items-center gap-2">
+              <Link
+                href="/auth/signin"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-wire hover:text-spark border border-wire/20 hover:border-cyan-400/50 transition-all"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-cyan-500 to-cyan-600 text-void hover:shadow-neon-cyan transition-all"
+              >
+                Sign Up
+              </Link>
+            </div>
+
             {/* System status indicator */}
             <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-acid-400/10 border border-acid-400/20 text-xs font-mono text-acid-400">
               <Activity size={11} className="animate-pulse" />
@@ -139,6 +157,24 @@ export default function Navbar() {
                     {label}
                   </Link>
                 ))}
+
+                {/* Mobile auth buttons */}
+                <div className="border-t border-wire/10 mt-2 pt-3 flex flex-col gap-2">
+                  <Link
+                    href="/auth/signin"
+                    onClick={() => setMobileOpen(false)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-wire border border-wire/20 hover:border-cyan-400/50 transition-all text-center"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    onClick={() => setMobileOpen(false)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-cyan-500 to-cyan-600 text-void transition-all text-center"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
               </div>
             </motion.div>
           )}

@@ -246,7 +246,7 @@ async def get_comment_replies(
 @router.post("/{comment_id}/replies")
 async def reply_to_comment(
     comment_id: str,
-    content: str = Field(..., min_length=1, max_length=5000),
+    content: str = Body(..., min_length=1, max_length=5000),
     current_user_id: str = Depends(get_current_user_id),
 ):
     """

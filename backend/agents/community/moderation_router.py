@@ -18,7 +18,7 @@ db_client = BlogDatabaseService()
 # Pydantic Models
 class ReportCreate(BaseModel):
     """Report creation request"""
-    type: str = Field(..., regex="^(thread|comment|user)$")
+    type: str = Field(..., pattern="^(thread|comment|user)$")
     target_id: str
     reason: str = Field(..., min_length=10, max_length=500)
     description: Optional[str] = Field(None, max_length=2000)
@@ -26,7 +26,7 @@ class ReportCreate(BaseModel):
 
 class ModerationAction(BaseModel):
     """Moderation action request"""
-    action: str = Field(..., regex="^(pin|unpin|lock|unlock|hide|unhide|warn|suspend)$")
+    action: str = Field(..., pattern="^(pin|unpin|lock|unlock|hide|unhide|warn|suspend)$")
     reason: Optional[str] = Field(None, max_length=500)
 
 
@@ -34,7 +34,7 @@ class WarningCreate(BaseModel):
     """Create user warning"""
     user_id: str
     reason: str = Field(..., max_length=500)
-    severity: str = Field(..., regex="^(low|medium|high)$")
+    severity: str = Field(..., pattern="^(low|medium|high)$")
 
 
 # Response Models
@@ -161,7 +161,7 @@ async def create_report(
 
 @router.get("/reports", response_model=List[ReportResponse])
 async def list_reports(
-    status_filter: Optional[str] = Query(None, regex="^(open|reviewing|resolved|dismissed)$"),
+    status_filter: Optional[str] = Query(None, pattern="^(open|reviewing|resolved|dismissed)$"),
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=50),
     current_user_id: str = Depends(get_current_user_id),
@@ -206,7 +206,7 @@ async def list_reports(
 @router.put("/reports/{report_id}")
 async def update_report_status(
     report_id: str,
-    new_status: str = Query(..., regex="^(reviewing|resolved|dismissed)$"),
+    new_status: str = Query(..., pattern="^(reviewing|resolved|dismissed)$"),
     current_user_id: str = Depends(get_current_user_id),
 ):
     """
@@ -470,7 +470,7 @@ async def delete_comment_moderation(
 async def warn_user(
     user_id: str,
     reason: str = Query(..., min_length=10, max_length=500),
-    severity: str = Query(..., regex="^(low|medium|high)$"),
+    severity: str = Query(..., pattern="^(low|medium|high)$"),
     current_user_id: str = Depends(get_current_user_id),
 ):
     """

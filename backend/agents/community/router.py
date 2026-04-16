@@ -306,7 +306,7 @@ async def list_categories(community_id: str):
     """
     try:
         result = (
-            db_client.client.table("categories")
+            db_client.client.table("community_categories")
             .select("*")
             .eq("community_id", community_id)
             .order("order", asc=True)
@@ -370,7 +370,7 @@ async def create_category(
             "threads_count": 0,
         }
 
-        result = db_client.client.table("categories").insert(category_data).execute()
+        result = db_client.client.table("community_categories").insert(category_data).execute()
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create category")

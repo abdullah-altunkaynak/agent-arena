@@ -12,6 +12,7 @@ sys.path.insert(0, str(BACKEND_DIR.parent))
 from engine.synapse import router as synapse_router
 from agents.router import router as agents_router
 from chat.router import router as chat_router
+from auth.router import router as auth_router
 from agents.community import community_router, threads_router, comments_router, moderation_router
 
 # Conditionally import blog router if available (private module)
@@ -44,6 +45,7 @@ async def health_check():
 app.include_router(synapse_router, prefix="/api/arena", tags=["Arena"])
 app.include_router(agents_router, prefix="/api/agents", tags=["Agents"])
 app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
+app.include_router(auth_router, tags=["Auth"])
 app.include_router(community_router, tags=["Community"])
 app.include_router(threads_router, tags=["Threads"])
 app.include_router(comments_router, tags=["Comments"])

@@ -178,7 +178,7 @@ class Community(Base):
 
 class Category(Base):
     """Discussion categories within communities"""
-    __tablename__ = "categories"
+    __tablename__ = "community_categories"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_lib.uuid4)
     community_id = Column(UUID(as_uuid=True), ForeignKey("communities.id", ondelete="CASCADE"), nullable=False, index=True)

@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
-import { Search, Plus, Users, MessageSquare, TrendingUp } from 'react-feather';
+import { Search, Plus, Users, MessageSquare, TrendingUp } from 'lucide-react';
 
 export default function CommunitiesPage() {
     const [communities, setCommunities] = useState([]);
@@ -115,8 +115,8 @@ export default function CommunitiesPage() {
                                 setSkip(0);
                             }}
                             className={`pb-3 px-4 font-medium transition-colors ${isPublic
-                                    ? 'text-blue-400 border-b-2 border-blue-400'
-                                    : 'text-gray-400 hover:text-gray-200'
+                                ? 'text-blue-400 border-b-2 border-blue-400'
+                                : 'text-gray-400 hover:text-gray-200'
                                 }`}
                         >
                             Public Communities
@@ -127,8 +127,8 @@ export default function CommunitiesPage() {
                                 setSkip(0);
                             }}
                             className={`pb-3 px-4 font-medium transition-colors ${!isPublic
-                                    ? 'text-blue-400 border-b-2 border-blue-400'
-                                    : 'text-gray-400 hover:text-gray-200'
+                                ? 'text-blue-400 border-b-2 border-blue-400'
+                                : 'text-gray-400 hover:text-gray-200'
                                 }`}
                         >
                             Private Communities
