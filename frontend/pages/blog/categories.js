@@ -46,6 +46,11 @@ export default function BlogCategoriesPage() {
         setLanguage(selectedLang);
         localStorage.setItem('blogLanguage', selectedLang);
 
+        // Set HTML lang attribute dynamically
+        if (typeof document !== 'undefined') {
+            document.documentElement.lang = selectedLang === 'tr' ? 'tr' : 'en';
+        }
+
         if (!queryLang) {
             router.replace(
                 {

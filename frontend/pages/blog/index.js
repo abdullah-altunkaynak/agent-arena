@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import {
     Eye,
@@ -88,6 +89,11 @@ export default function BlogPage() {
 
         setLanguage(selectedLang);
         localStorage.setItem('blogLanguage', selectedLang);
+
+        // Set HTML lang attribute dynamically
+        if (typeof document !== 'undefined') {
+            document.documentElement.lang = selectedLang === 'tr' ? 'tr' : 'en';
+        }
 
         if (!queryLang) {
             router.replace(
@@ -317,9 +323,12 @@ export default function BlogPage() {
     });
     const hasCategoryIcon = (cat) => typeof cat?.icon === 'string' && cat.icon.trim().length > 0;
     const langForSeo = normalizeLang(typeof router.query.lang === 'string' ? router.query.lang : language);
-    const canonicalUrl = `${SITE_URL}/blog?lang=${langForSeo}`;
+    // Canonical URL: clean, without language parameter
+    const canonicalUrl = `${SITE_URL}/blog`;
+    // hreflang URLs: include language parameter for proper language targeting
     const hreflangTrUrl = `${SITE_URL}/blog?lang=tr`;
     const hreflangEnUrl = `${SITE_URL}/blog?lang=en`;
+    // x-default: use clean URL
     const defaultUrl = `${SITE_URL}/blog`;
     const blogBreadcrumbJsonLd = {
         '@context': 'https://schema.org',
@@ -465,12 +474,15 @@ export default function BlogPage() {
                             <Link key={post.id} href={`/blog/${post.slug}`}>
                                 <div className={`rounded-lg overflow-hidden border h-full cursor-pointer group ${isDark ? 'bg-slate-800/40 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
                                     {post.featured_image_url ? (
-                                        <img
-                                            src={post.featured_image_url}
-                                            alt={getPostTitle(post)}
-                                            className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
-                                            onError={(e) => { e.target.style.display = 'none'; }}
-                                        />
+                                        <div className="relative w-full h-28 overflow-hidden">
+                                            <Image
+                                                src={post.featured_image_url}
+                                                alt={getPostTitle(post)}
+                                                fill
+                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 200px"
+                                                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                            />
+                                        </div>
                                     ) : null}
                                     <div className="p-3">
                                         <h3 className={`text-sm font-bold line-clamp-2 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -556,11 +568,13 @@ export default function BlogPage() {
                                 <div className={`group rounded-lg overflow-hidden border transition cursor-pointer ${isDark ? 'border-slate-700 hover:border-cyan-500/50' : 'border-slate-200 hover:border-blue-300'}`}>
                                     {featuredPost.featured_image_url && (
                                         <div className="relative w-full h-64 md:h-80 overflow-hidden">
-                                            <img
+                                            <Image
                                                 src={featuredPost.featured_image_url}
                                                 alt={getPostTitle(featuredPost)}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                                fill
+                                                priority
+                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 900px"
+                                                className="object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
                                                 <div className="p-6 w-full">
@@ -635,11 +649,12 @@ export default function BlogPage() {
                                             <div className={`group rounded-lg overflow-hidden border transition cursor-pointer flex gap-4 ${isDark ? 'bg-slate-800/30 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
                                                 {post.featured_image_url && (
                                                     <div className="relative w-32 h-32 flex-shrink-0 overflow-hidden">
-                                                        <img
+                                                        <Image
                                                             src={post.featured_image_url}
                                                             alt={getPostTitle(post)}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                                            fill
+                                                            sizes="128px"
+                                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
                                                         />
                                                     </div>
                                                 )}

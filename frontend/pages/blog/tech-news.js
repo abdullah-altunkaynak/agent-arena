@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { ArrowLeft, Calendar, Newspaper, Eye } from 'lucide-react';
 import Navbar from '../../components/Navbar';
@@ -48,6 +49,11 @@ export default function TechNewsPage() {
         const queryLang = typeof router.query.lang === 'string' ? normalizeLang(router.query.lang) : null;
         const savedLang = normalizeLang(localStorage.getItem('blogLanguage'));
         const selectedLang = queryLang || savedLang;
+
+        // Set HTML lang attribute dynamically
+        if (typeof document !== 'undefined') {
+            document.documentElement.lang = selectedLang === 'tr' ? 'tr' : 'en';
+        }
 
         setLanguage(selectedLang);
         localStorage.setItem('blogLanguage', selectedLang);
@@ -205,11 +211,12 @@ export default function TechNewsPage() {
                                 <div className={`group rounded-lg overflow-hidden border transition cursor-pointer flex gap-4 ${isDark ? 'bg-slate-800/30 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
                                     {post.featured_image_url ? (
                                         <div className="relative w-32 h-32 flex-shrink-0 overflow-hidden">
-                                            <img
+                                            <Image
                                                 src={post.featured_image_url}
                                                 alt={getPostTitle(post)}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                                fill
+                                                sizes="128px"
+                                                className="object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
                                         </div>
                                     ) : null}

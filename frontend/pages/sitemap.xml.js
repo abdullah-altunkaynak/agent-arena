@@ -1,6 +1,5 @@
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://agentarena.me').replace(/\/$/, '');
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me';
-const BLOG_LANGS = ['en', 'tr'];
 
 function logSitemap(message, details) {
     if (typeof details === 'undefined') {
@@ -85,20 +84,19 @@ function buildStaticUrls(staticPaths) {
     return staticPaths.map((path) => `${SITE_URL}${path}`);
 }
 
-function buildLocalizedBlogStaticUrls() {
-    const localizedBlogPaths = ['/blog', '/blog/categories', '/blog/tech-news', '/blog/archive'];
-
-    return localizedBlogPaths.flatMap((path) =>
-        BLOG_LANGS.map((lang) => `${SITE_URL}${path}?lang=${lang}`)
-    );
+// Build clean URLs for blog sections without language parameters
+// Google will discover language variants through hreflang tags in page headers
+function buildBlogStaticUrls() {
+    const blogPaths = ['/blog', '/blog/categories', '/blog/tech-news', '/blog/archive'];
+    return blogPaths.map((path) => `${SITE_URL}${path}`);
 }
 
+// Build clean post URLs without language parameters
+// Language variants are indicated via hreflang tags in the blog post pages
 function buildPostUrls(posts) {
     return posts
         .filter((post) => post?.slug)
-        .flatMap((post) =>
-            BLOG_LANGS.map((lang) => `${SITE_URL}/blog/${post.slug}?lang=${lang}`)
-        );
+        .map((post) => `${SITE_URL}/blog/${post.slug}`);
 }
 
 function buildSitemapXml(staticPaths, posts, debugInfo = null) {
@@ -107,32 +105,33 @@ function buildSitemapXml(staticPaths, posts, debugInfo = null) {
         buildUrlEntry(`${SITE_URL}${path}`, now, path === '/' ? '1.0' : '0.8', 'weekly')
     );
 
-    const localizedBlogStaticEntries = buildLocalizedBlogStaticUrls().map((url) =>
+    // Blog static pages: clean URLs only
+    const blogStaticEntries = buildBlogStaticUrls().map((url) =>
         buildUrlEntry(url, now, '0.8', 'weekly')
     );
 
+    // Post URLs: clean slugs without language parameters
+    // Language variants are handled via hreflang tags in page headers
     const postEntries = posts
         .filter((post) => post?.slug)
-        .flatMap((post) => {
+        .map((post) => {
             const updatedAt = post.updated_at || post.published_at || post.created_at || now;
-            return BLOG_LANGS.map((lang) =>
-                buildUrlEntry(`${SITE_URL}/blog/${post.slug}?lang=${lang}`, updatedAt, '0.8', 'weekly')
-            );
+            return buildUrlEntry(`${SITE_URL}/blog/${post.slug}`, updatedAt, '0.8', 'weekly');
         });
 
     const debugComments = debugInfo
         ? [
-            `<!-- sitemap-debug siteUrl=${escapeXml(debugInfo.siteUrl)} apiBase=${escapeXml(debugInfo.apiBase)} staticCount=${escapeXml(debugInfo.staticCount)} postCount=${escapeXml(debugInfo.postCount)} -->`,
-            `<!-- sitemap-debug requestCount=${escapeXml(debugInfo.requestCount)} -->`,
+            `<!-- sitemap siteUrl=${escapeXml(debugInfo.siteUrl)} staticCount=${escapeXml(debugInfo.staticCount)} postCount=${escapeXml(debugInfo.postCount)} -->`,
+            `<!-- Canonical urls without language parameters. Language variants via hreflang in page headers. -->`,
         ]
         : [];
 
     return [
         '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
         ...debugComments,
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
         ...staticEntries,
-        ...localizedBlogStaticEntries,
+        ...blogStaticEntries,
         ...postEntries,
         '</urlset>',
     ].join('');

@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, Calendar, ChevronRight, Newspaper } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
@@ -16,7 +17,16 @@ export default function BlogArchivePage({ posts = [], page = 1, totalPages = 1, 
         ? 'Browse every published article from newest to oldest.'
         : 'Yayimlanmis tum yazilari yeni tarihten eskiye goz atın.';
 
-    const canonicalUrl = `${SITE_URL}/blog/archive${page > 1 ? `?page=${page}&lang=${language}` : `?lang=${language}`}`;
+    // Set HTML lang attribute dynamically
+    React.useEffect(() => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.lang = language === 'tr' ? 'tr' : 'en';
+        }
+    }, [language]);
+
+    // Canonical URL: clean, without language parameter
+    const canonicalUrl = `${SITE_URL}/blog/archive${page > 1 ? `?page=${page}` : ''}`;
+    // hreflang URLs: include language parameter
     const hreflangTrUrl = `${SITE_URL}/blog/archive?lang=tr${page > 1 ? `&page=${page}` : ''}`;
     const hreflangEnUrl = `${SITE_URL}/blog/archive?lang=en${page > 1 ? `&page=${page}` : ''}`;
 
@@ -88,11 +98,12 @@ export default function BlogArchivePage({ posts = [], page = 1, totalPages = 1, 
                             <article className={`group rounded-xl overflow-hidden border transition flex gap-4 ${isDark ? 'bg-slate-800/30 border-slate-700 hover:border-cyan-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
                                 {post.featured_image_url ? (
                                     <div className="relative w-36 md:w-44 h-32 md:h-36 flex-shrink-0 overflow-hidden">
-                                        <img
+                                        <Image
                                             src={post.featured_image_url}
                                             alt={getPostTitle(post)}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                            fill
+                                            sizes="(max-width: 640px) 144px, 176px"
+                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
                                         />
                                     </div>
                                 ) : null}

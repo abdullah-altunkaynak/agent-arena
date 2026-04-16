@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
     Eye,
     Calendar,
@@ -18,6 +19,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import Navbar from '../../components/Navbar';
+import { getCachedResponse, setCachedResponse, getCacheKey } from '../../lib/cache';
 
 const BLOG_API_BASE = process.env.NEXT_PUBLIC_BLOG_API_URL || `${process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me'}/api/v1/blog`;
 
@@ -128,6 +130,13 @@ export default function BlogPostPage({
         setLoading(false);
     }, [initialPost, initialRelatedPosts, initialPopularPosts]);
 
+    // Set HTML lang attribute dynamically based on current language
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.lang = language === 'tr' ? 'tr' : 'en';
+        }
+    }, [language]);
+
     if (loading && !post) {
         return (
             <>
@@ -230,9 +239,12 @@ export default function BlogPostPage({
     const seoTitle = truncateText(`${rawTitle} | Agent Arena Blog`, 60);
     const seoDescription = truncateText(rawDescription || rawTitle, 160);
     const langForSeo = normalizeLang(typeof router.query.lang === 'string' ? router.query.lang : language);
-    const canonicalUrl = `${SITE_URL}/blog/${safeSlug}?lang=${langForSeo}`;
+    // Canonical URL: clean, without language parameter (per Google SEO standards)
+    const canonicalUrl = `${SITE_URL}/blog/${safeSlug}`;
+    // hreflang URLs: include language parameter for proper language targeting
     const hreflangTrUrl = `${SITE_URL}/blog/${safeSlug}?lang=tr`;
     const hreflangEnUrl = `${SITE_URL}/blog/${safeSlug}?lang=en`;
+    // x-default: use clean URL
     const defaultUrl = `${SITE_URL}/blog/${safeSlug}`;
     const defaultOgImage = process.env.NEXT_PUBLIC_DEFAULT_OG_IMAGE || `${SITE_URL}/og-default.png`;
     const seoImage = post.featured_image_url || defaultOgImage;
@@ -244,10 +256,10 @@ export default function BlogPostPage({
         headline: rawTitle,
         description: seoDescription,
         image: [seoImage],
-        mainEntityOfPage: canonicalUrl,
+        mainEntityOfPage: canonicalUrl,  // Use clean canonical URL
         datePublished: publishedAt,
         dateModified: modifiedAt,
-        inLanguage: isEnglish ? 'en' : 'tr',
+        inLanguage: langForSeo === 'tr' ? 'tr' : 'en',
         author: {
             '@type': 'Organization',
             name: 'Agent Arena',
@@ -459,9 +471,13 @@ export default function BlogPostPage({
                     {/* Featured Image */}
                     {post.featured_image_url && (
                         <div className={`w-full h-96 rounded-xl overflow-hidden mb-8 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                            <img
+                            <Image
                                 src={post.featured_image_url}
                                 alt={getPostTitle()}
+                                width={1200}
+                                height={600}
+                                priority
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
                                 className="w-full h-full object-cover"
                             />
                         </div>
@@ -657,55 +673,85 @@ export async function getServerSideProps(context) {
     }
 
     try {
-        const resolveResponse = await fetch(
-            `${BLOG_API_BASE}/posts/resolve-slug/${encodeURIComponent(slug)}`
-        );
+        // Check cache first for post
+        const postCacheKey = getCacheKey('blog_post', { slug });
+        let initialPost = getCachedResponse(postCacheKey);
 
-        if (!resolveResponse.ok) {
-            return { props: { initialPost: null, initialRelatedPosts: [], initialPopularPosts: [] } };
+        if (!initialPost) {
+            const resolveResponse = await fetch(
+                `${BLOG_API_BASE}/posts/resolve-slug/${encodeURIComponent(slug)}`
+            );
+
+            if (!resolveResponse.ok) {
+                return { props: { initialPost: null, initialRelatedPosts: [], initialPopularPosts: [] } };
+            }
+
+            const resolved = await resolveResponse.json();
+            if (!resolved?.found) {
+                return { notFound: true };
+            }
+
+            if (resolved?.found && resolved?.redirect_to && resolved.redirect_to !== slug) {
+                const lang = context?.query?.lang;
+                const langQuery = typeof lang === 'string' ? `?lang=${encodeURIComponent(lang)}` : '';
+                return {
+                    redirect: {
+                        destination: `/blog/${encodeURIComponent(resolved.redirect_to)}${langQuery}`,
+                        permanent: true,
+                    },
+                };
+            }
+
+            const postResponse = await fetch(`${BLOG_API_BASE}/posts/slug/${encodeURIComponent(slug)}`);
+            if (!postResponse.ok) {
+                return { props: { initialPost: null, initialRelatedPosts: [], initialPopularPosts: [] } };
+            }
+
+            initialPost = await postResponse.json();
+            // Cache post for 5 minutes
+            setCachedResponse(postCacheKey, initialPost, 300000);
         }
 
-        const resolved = await resolveResponse.json();
-        if (!resolved?.found) {
-            return { notFound: true };
+        // Fetch related posts - cache by category
+        const relatedCacheKey = getCacheKey('blog_related', { category_id: initialPost.category_id });
+        let relatedPostsData = getCachedResponse(relatedCacheKey);
+
+        if (!relatedPostsData && initialPost?.category_id) {
+            const relatedResponse = await fetch(
+                `${BLOG_API_BASE}/posts?category_id=${initialPost.category_id}&page_size=3`
+            ).then((r) => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }));
+            setCachedResponse(relatedCacheKey, relatedResponse, 600000); // 10 min cache
+            relatedPostsData = relatedResponse;
+        } else if (!relatedPostsData) {
+            relatedPostsData = { items: [] };
         }
 
-        if (resolved?.found && resolved?.redirect_to && resolved.redirect_to !== slug) {
-            const lang = context?.query?.lang;
-            const langQuery = typeof lang === 'string' ? `?lang=${encodeURIComponent(lang)}` : '';
-            return {
-                redirect: {
-                    destination: `/blog/${encodeURIComponent(resolved.redirect_to)}${langQuery}`,
-                    permanent: true,
-                },
-            };
+        // Fetch popular posts - cache globally
+        const popularCacheKey = getCacheKey('blog_popular', {});
+        let popularPostsData = getCachedResponse(popularCacheKey);
+
+        if (!popularPostsData) {
+            const popularResponse = await fetch(
+                `${BLOG_API_BASE}/posts?status=published&page_size=10`
+            ).then((r) => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }));
+            setCachedResponse(popularCacheKey, popularResponse, 600000); // 10 min cache
+            popularPostsData = popularResponse;
         }
 
-        const postResponse = await fetch(`${BLOG_API_BASE}/posts/slug/${encodeURIComponent(slug)}`);
-        if (!postResponse.ok) {
-            return { props: { initialPost: null, initialRelatedPosts: [], initialPopularPosts: [] } };
-        }
-
-        const initialPost = await postResponse.json();
-
-        const relatedPosts = initialPost?.category_id
-            ? await fetch(`${BLOG_API_BASE}/posts?category_id=${initialPost.category_id}&page_size=3`).then((r) => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }))
-            : { items: [] };
-
-        const popularPosts = await fetch(`${BLOG_API_BASE}/posts?status=published&page_size=10`).then((r) => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }));
-
-        const sortedPopular = (popularPosts?.items || [])
+        const sortedPopular = (popularPostsData?.items || [])
             .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
             .slice(0, 5);
 
         return {
             props: {
                 initialPost,
-                initialRelatedPosts: (relatedPosts?.items || []).filter((p) => p.id !== initialPost.id).slice(0, 3),
+                initialRelatedPosts: (relatedPostsData?.items || []).filter((p) => p.id !== initialPost.id).slice(0, 3),
                 initialPopularPosts: sortedPopular,
             },
+            revalidate: 300, // ISR: Revalidate every 5 minutes
         };
     } catch (error) {
+        console.error('Error in getServerSideProps:', error);
         return { props: { initialPost: null, initialRelatedPosts: [], initialPopularPosts: [] } };
     }
 }

@@ -200,19 +200,38 @@ class BlogDatabaseService:
         page_size: int = 10,
     ) -> Dict:
         """
-        Retrieve paginated list of posts
+        Retrieve paginated list of posts with optimized queries
 
         Args:
             status: Filter by status (optional)
+            category_id: Filter by category (optional)
             page: Page number (1-indexed)
-            page_size: Number of posts per page
+            page_size: Number of posts per page (max 100)
 
         Returns:
             Dict with posts and pagination info
         """
         self._check_connection()
 
-        query = self.client.table("posts").select("*")
+        # Select only necessary fields to reduce bandwidth and improve performance
+        necessary_fields = [
+            "id",
+            "title_en",
+            "title_tr",
+            "excerpt_en",
+            "excerpt_tr",
+            "slug",
+            "status",
+            "category_id",
+            "featured_image_url",
+            "created_at",
+            "published_at",
+            "updated_at",
+            "view_count",
+            "author",
+        ]
+
+        query = self.client.table("posts").select(", ".join(necessary_fields))
 
         # Apply status filter if provided
         if status:
@@ -222,22 +241,24 @@ class BlogDatabaseService:
         if category_id:
             query = query.eq("category_id", category_id)
 
-        # Get total count
+        # Get total count before pagination
         count_response = query.execute()
-        total = len(count_response.data)
+        total = len(count_response.data) if count_response.data else 0
 
         # Calculate offset
         offset = (page - 1) * page_size
+        page_size = min(page_size, 100)  # Cap at 100 to prevent abuse
 
         # Apply ordering and pagination
         response = (
-            query.order("created_at", desc=True)
+            query.order("published_at", desc=True)
+            .order("created_at", desc=True)
             .range(offset, offset + page_size - 1)
             .execute()
         )
 
-        posts = [PostResponse(**item) for item in response.data]
-        total_pages = (total + page_size - 1) // page_size
+        posts = [PostResponse(**item) for item in (response.data or [])]
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
 
         return {
             "items": posts,
@@ -396,7 +417,9 @@ class BlogDatabaseService:
         """Get categories, optionally limited to categories referenced by posts."""
         self._check_connection()
         try:
-            response = self.client.table("categories").select("*").execute()
+            # Select only necessary fields
+            fields = ["id", "name_en", "name_tr", "icon", "created_at", "updated_at"]
+            response = self.client.table("categories").select(", ".join(fields)).execute()
             categories = response.data if response.data else []
             normalized = [self._normalize_category_row(category) for category in categories]
 
