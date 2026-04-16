@@ -42,11 +42,15 @@ const nextConfig = {
 
   // API rewrites for backend
   rewrites: async () => {
+    const backendUrl = process.env.NODE_ENV === 'development'
+      ? 'http://127.0.0.1:10000'
+      : (process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me');
+
     return {
       beforeFiles: [
         {
           source: '/api/:path*',
-          destination: 'http://127.0.0.1:10000/api/:path*',
+          destination: `${backendUrl}/api/:path*`,
         },
       ],
     };
