@@ -52,16 +52,16 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center gap-3 group">
             <Image
               src="/logoagentarena.png"
               alt="Agent Arena logo"
-              width={32}
-              height={32}
-              className="rounded-lg shadow-neon-cyan"
+              width={46}
+              height={46}
+              className="rounded-xl shadow-neon-cyan"
               priority
             />
-            <span className="font-display font-bold text-lg tracking-tight text-spark group-hover:neon-text-cyan transition-all">
+            <span className="font-display font-bold text-xl tracking-tight text-spark group-hover:neon-text-cyan transition-all">
               Agent<span className="text-cyan-400">Arena</span>
             </span>
           </Link>
