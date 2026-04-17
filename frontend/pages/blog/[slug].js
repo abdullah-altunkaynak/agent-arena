@@ -286,7 +286,7 @@ export default function BlogPostPage({
             name: 'Agent Arena',
             logo: {
                 '@type': 'ImageObject',
-                url: `${SITE_URL}/logo.png`,
+                url: `${SITE_URL}/logoagentarena.png`,
             },
         },
     };

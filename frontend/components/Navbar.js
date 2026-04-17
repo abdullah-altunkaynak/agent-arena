@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Cpu,
   Zap,
   LayoutDashboard,
   Bot,
@@ -53,12 +53,14 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="relative">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow-neon-cyan">
-                <Cpu size={16} className="text-void" />
-              </div>
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-acid-400 rounded-full border border-void animate-pulse-slow" />
-            </div>
+            <Image
+              src="/logoagentarena.png"
+              alt="Agent Arena logo"
+              width={32}
+              height={32}
+              className="rounded-lg shadow-neon-cyan"
+              priority
+            />
             <span className="font-display font-bold text-lg tracking-tight text-spark group-hover:neon-text-cyan transition-all">
               Agent<span className="text-cyan-400">Arena</span>
             </span>

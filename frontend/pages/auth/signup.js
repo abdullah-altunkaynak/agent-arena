@@ -104,9 +104,9 @@ export default function SignUp() {
                 localStorage.setItem('refresh_token', data.refresh_token);
                 localStorage.setItem('user', JSON.stringify(data.user));
 
-                setSuccessMessage('Account created successfully! Redirecting to verify email...');
+                setSuccessMessage('Account created successfully! Redirecting to the community...');
                 setTimeout(() => {
-                    router.push('/auth/verify-email');
+                    router.push('/community');
                 }, 1500);
             } else {
                 const errorData = await response.json();

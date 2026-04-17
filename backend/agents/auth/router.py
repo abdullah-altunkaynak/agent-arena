@@ -142,12 +142,9 @@ async def register(request: RegisterRequest):
         if existing_username.data:
             raise HTTPException(status_code=400, detail="Username already taken")
 
-        # Get member role
-        role_result = db_client.client.table("roles").select("id").eq("name", "member").execute()
-        if not role_result.data:
-            raise HTTPException(status_code=500, detail="Default role not configured")
-
-        member_role_id = role_result.data[0]["id"]
+        # Use the default user role if it exists; keep registration working even if roles are sparse.
+        role_result = db_client.client.table("roles").select("id").eq("name", "user").execute()
+        member_role_id = role_result.data[0]["id"] if role_result.data else None
 
         # Hash password
         password_hash = User.hash_password(request.password)
@@ -161,37 +158,12 @@ async def register(request: RegisterRequest):
             "password_hash": password_hash,
             "full_name": request.full_name or request.username,
             "role_id": member_role_id,
-            "email_verified": False,
+            "is_email_verified": False,
         }
 
         user_result = db_client.client.table("users").insert(user_data).execute()
         if not user_result.data:
             raise HTTPException(status_code=500, detail="Failed to create user")
-
-        # Create user profile
-        profile_data = {
-            "user_id": user_id,
-            "points_total": 0,
-            "level": 1,
-        }
-        db_client.client.table("user_profiles").insert(profile_data).execute()
-
-        # Create verification token
-        verification_token = JWTHandler.create_email_verification_token()
-        expires_at = (datetime.utcnow() + timedelta(hours=EMAIL_VERIFICATION_EXPIRATION_HOURS)).isoformat()
-
-        token_data = {
-            "id": str(uuid.uuid4()),
-            "user_id": user_id,
-            "token": verification_token,
-            "expires_at": expires_at,
-            "is_used": False,
-        }
-
-        db_client.client.table("email_verification_tokens").insert(token_data).execute()
-
-        # Send verification email
-        EmailService.send_verification_email(request.email, request.username, verification_token)
 
         # Create tokens
         tokens = TokenHelper.create_tokens(user_id, request.username)
@@ -239,22 +211,13 @@ async def login(request: LoginRequest):
         user = user_result.data[0]
 
         # Verify password
-        if not User.hash_password("") and not User().verify_password(request.password, user["password_hash"]):
-            # Verify against hash
-            from passlib.context import CryptContext
-            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-            if not pwd_context.verify(request.password, user["password_hash"]):
-                raise HTTPException(status_code=401, detail="Invalid email/username or password")
-
-        # Check if user is active
-        if not user["is_active"]:
-            raise HTTPException(status_code=403, detail="Account is inactive")
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        if not pwd_context.verify(request.password, user["password_hash"]):
+            raise HTTPException(status_code=401, detail="Invalid email/username or password")
 
         # Create tokens
         tokens = TokenHelper.create_tokens(user["id"], user["username"])
-
-        # Update last active
-        db_client.client.table("user_profiles").update({"last_active": datetime.utcnow().isoformat()}).eq("user_id", user["id"]).execute()
 
         user_response = {
             "id": user["id"],
@@ -263,7 +226,7 @@ async def login(request: LoginRequest):
             "full_name": user["full_name"],
             "avatar_url": user["avatar_url"],
             "bio": user["bio"],
-            "email_verified": user["email_verified"],
+            "email_verified": user.get("is_email_verified", False),
             "created_at": user["created_at"],
         }
 
@@ -286,33 +249,7 @@ async def verify_email(request: VerifyEmailRequest):
     """
     Verify user email with token
     """
-    try:
-        # Find token
-        token_result = db_client.client.table("email_verification_tokens").select("*").eq("token", request.token).execute()
-
-        if not token_result.data:
-            raise HTTPException(status_code=400, detail="Invalid verification token")
-
-        token_record = token_result.data[0]
-
-        # Check if token is valid
-        expires_at = datetime.fromisoformat(token_record["expires_at"])
-        if token_record["is_used"] or expires_at < datetime.utcnow():
-            raise HTTPException(status_code=400, detail="Verification token expired")
-
-        # Mark email as verified
-        db_client.client.table("users").update({"email_verified": True}).eq("id", token_record["user_id"]).execute()
-
-        # Mark token as used
-        db_client.client.table("email_verification_tokens").update({"is_used": True}).eq("id", token_record["id"]).execute()
-
-        return {"message": "Email verified successfully"}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Email verification error: {e}")
-        raise HTTPException(status_code=500, detail="Email verification failed")
+    return {"message": "Email verification is not enabled in this deployment"}
 
 
 @router.post("/forgot-password")
@@ -320,38 +257,7 @@ async def forgot_password(request: ForgotPasswordRequest):
     """
     Request password reset email
     """
-    try:
-        # Find user by email
-        user_result = db_client.client.table("users").select("*").eq("email", request.email).execute()
-
-        if not user_result.data:
-            # Don't reveal if email exists
-            return {"message": "If that email is registered, you will receive a password reset link"}
-
-        user = user_result.data[0]
-
-        # Create reset token
-        reset_token = JWTHandler.create_password_reset_token()
-        expires_at = (datetime.utcnow() + timedelta(hours=PASSWORD_RESET_EXPIRATION_HOURS)).isoformat()
-
-        token_data = {
-            "id": str(uuid.uuid4()),
-            "user_id": user["id"],
-            "token": reset_token,
-            "expires_at": expires_at,
-            "is_used": False,
-        }
-
-        db_client.client.table("password_reset_tokens").insert(token_data).execute()
-
-        # Send reset email
-        EmailService.send_password_reset_email(request.email, user["username"], reset_token)
-
-        return {"message": "If that email is registered, you will receive a password reset link"}
-
-    except Exception as e:
-        print(f"Forgot password error: {e}")
-        return {"message": "If that email is registered, you will receive a password reset link"}
+    return {"message": "Password reset is not enabled in this deployment"}
 
 
 @router.post("/reset-password")
@@ -359,36 +265,7 @@ async def reset_password(request: ResetPasswordRequest):
     """
     Reset password with token
     """
-    try:
-        # Find token
-        token_result = db_client.client.table("password_reset_tokens").select("*").eq("token", request.token).execute()
-
-        if not token_result.data:
-            raise HTTPException(status_code=400, detail="Invalid reset token")
-
-        token_record = token_result.data[0]
-
-        # Check if token is valid
-        expires_at = datetime.fromisoformat(token_record["expires_at"])
-        if token_record["is_used"] or expires_at < datetime.utcnow():
-            raise HTTPException(status_code=400, detail="Reset token expired")
-
-        # Hash new password
-        password_hash = User.hash_password(request.new_password)
-
-        # Update user password
-        db_client.client.table("users").update({"password_hash": password_hash}).eq("id", token_record["user_id"]).execute()
-
-        # Mark token as used
-        db_client.client.table("password_reset_tokens").update({"is_used": True}).eq("id", token_record["id"]).execute()
-
-        return {"message": "Password reset successfully"}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Reset password error: {e}")
-        raise HTTPException(status_code=500, detail="Password reset failed")
+    raise HTTPException(status_code=501, detail="Password reset is not enabled in this deployment")
 
 
 @router.post("/refresh")
@@ -426,53 +303,7 @@ async def resend_verification_email(request: dict):
     """
     Resend verification email
     """
-    try:
-        email = request.get("email")
-        if not email:
-            raise HTTPException(status_code=400, detail="Email is required")
-
-        # Find user by email
-        user_result = db_client.client.table("users").select("*").eq("email", email).execute()
-
-        if not user_result.data:
-            # Don't reveal if email exists
-            return {"message": "If that email is registered, you will receive a verification email"}
-
-        user = user_result.data[0]
-
-        # Check if already verified
-        if user["email_verified"]:
-            return {"message": "Email is already verified"}
-
-        # Invalidate old tokens
-        db_client.client.table("email_verification_tokens").update({"is_used": True}).eq(
-            "user_id", user["id"]
-        ).eq("is_used", False).execute()
-
-        # Create new verification token
-        verification_token = JWTHandler.create_email_verification_token()
-        expires_at = (datetime.utcnow() + timedelta(hours=EMAIL_VERIFICATION_EXPIRATION_HOURS)).isoformat()
-
-        token_data = {
-            "id": str(uuid.uuid4()),
-            "user_id": user["id"],
-            "token": verification_token,
-            "expires_at": expires_at,
-            "is_used": False,
-        }
-
-        db_client.client.table("email_verification_tokens").insert(token_data).execute()
-
-        # Send verification email
-        EmailService.send_verification_email(email, user["username"], verification_token)
-
-        return {"message": "If that email is registered, you will receive a verification email"}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Resend verification error: {e}")
-        return {"message": "If that email is registered, you will receive a verification email"}
+    return {"message": "Email verification is not enabled in this deployment"}
 
 
 @router.get("/me", response_model=UserResponse)

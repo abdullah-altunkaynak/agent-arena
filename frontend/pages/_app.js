@@ -29,8 +29,9 @@ export default function App({ Component, pageProps }) {
       </Script>
 
       <Head>
-        <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/48/robot-2.png" />
-        <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/96/robot-2.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/logoagentarena.png" />
+        <link rel="shortcut icon" href="/logoagentarena.png" />
+        <link rel="apple-touch-icon" href="/logoagentarena.png" />
       </Head>
       {isBlogPage ? (
         <>
