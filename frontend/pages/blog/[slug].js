@@ -10,10 +10,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
     Eye,
-    Calendar,
     ArrowLeft,
     Share2,
-    Bookmark,
+    Twitter,
+    Linkedin,
+    Instagram,
+    Facebook,
+    MessageCircle,
+    BookOpen,
+    X,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -50,6 +55,9 @@ export default function BlogPostPage({
     const [newsletterMessage, setNewsletterMessage] = useState('');
     const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
     const [newsletterSuccess, setNewsletterSuccess] = useState(false);
+    const [shareNotice, setShareNotice] = useState('');
+    const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
+    const [sharePlatform, setSharePlatform] = useState('x');
 
     const slugFromRoute = typeof slug === 'string' ? slug : '';
     const safeSlug = initialPost?.slug || slugFromRoute || 'post';
@@ -241,6 +249,30 @@ export default function BlogPostPage({
         return `${clean.slice(0, maxLen - 1).trim()}...`;
     };
 
+    const getShareSnippet = () => {
+        const sourceText = postContent || postExcerpt || rawDescription || rawTitle;
+        const normalizedText = normalizeMarkdownContent(
+            htmlAnchorsToMarkdown(String(sourceText || '').replace(/<br\s*\/?>/gi, '\n'))
+        );
+        const paragraphs = String(normalizedText)
+            .split(/\n{2,}/)
+            .map((paragraph) => stripMarkdown(paragraph).replace(/\s+/g, ' ').trim())
+            .filter(Boolean);
+        const firstParagraph = paragraphs[0] || stripMarkdown(sourceText).replace(/\s+/g, ' ').trim();
+        const sentenceMatches = String(firstParagraph)
+            .replace(/\s+/g, ' ')
+            .match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) || [];
+        const summary = (sentenceMatches.length ? sentenceMatches.slice(0, 2).join(' ') : firstParagraph).trim();
+        const normalizedTitle = stripMarkdown(rawTitle).replace(/\s+/g, ' ').trim().toLowerCase();
+
+        let cleanedSummary = summary;
+        if (normalizedTitle && cleanedSummary.toLowerCase().startsWith(normalizedTitle)) {
+            cleanedSummary = cleanedSummary.slice(normalizedTitle.length).replace(/^[\s:.,;\-]+/, '').trim();
+        }
+
+        return truncateText(cleanedSummary || summary, 240);
+    };
+
     const getPostTitle = () => isEnglish ? (post.title_en || post.title_tr) : (post.title_tr || post.title_en);
     const getPostContent = () => isEnglish ? (post.content_en || post.content_tr) : (post.content_tr || post.content_en);
     const getPostExcerpt = () => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
@@ -267,6 +299,106 @@ export default function BlogPostPage({
     const seoImage = post.featured_image_url || defaultOgImage;
     const publishedAt = post.published_at || post.created_at || new Date().toISOString();
     const modifiedAt = post.updated_at || publishedAt;
+    const shareText = isEnglish
+        ? {
+            sectionTitle: 'Share this article',
+            sectionSubtitle: 'The post text is prepared automatically with title, summary, post link and homepage link.',
+            popupTitle: 'Ready-to-share text',
+            popupSubtitle: 'This text is prepared. Paste it into the selected social platform.',
+            close: 'Close',
+            copy: 'Copy ready text',
+            openAgain: 'Open platform again',
+            labels: {
+                x: 'Share on X',
+                linkedin: 'Share on LinkedIn',
+                medium: 'Share on Medium',
+                reddit: 'Share on Reddit',
+                instagram: 'Share on Instagram',
+                facebook: 'Share on Facebook',
+            },
+            messageReadMore: 'Read more:',
+            messageHomepage: 'Homepage:',
+            openedAndCopied: ' opened. Ready share text is copied to clipboard.',
+            openedAndManual: ' opened. Copy the ready text below and paste it.',
+            copiedAgain: 'Ready share text copied to clipboard again.',
+            copyFailed: 'Copy failed. You can select the text and copy manually.',
+        }
+        : {
+            sectionTitle: 'Bu yaziyi paylas',
+            sectionSubtitle: 'Baslik, ozet, yazi linki ve ana sayfa linki otomatik hazirlanir.',
+            popupTitle: 'Hazir paylasim metni',
+            popupSubtitle: 'Metin hazir. Sectigin sosyal platforma yapistirabilirsin.',
+            close: 'Kapat',
+            copy: 'Hazir metni kopyala',
+            openAgain: 'Platformu tekrar ac',
+            labels: {
+                x: "X'te paylas",
+                linkedin: "LinkedIn'de paylas",
+                medium: "Medium'da paylas",
+                reddit: "Reddit'te paylas",
+                instagram: "Instagram'da paylas",
+                facebook: "Facebook'ta paylas",
+            },
+            messageReadMore: 'Devamini okumak icin:',
+            messageHomepage: 'Ana sayfa:',
+            openedAndCopied: ' acildi. Hazir paylasim metni panoya kopyalandi.',
+            openedAndManual: ' acildi. Asagidaki hazir metni kopyalayip yapistirabilirsin.',
+            copiedAgain: 'Hazir paylasim metni tekrar panoya kopyalandi.',
+            copyFailed: 'Kopyalama basarisiz. Metni secip manuel kopyalayabilirsin.',
+        };
+    const shareSnippet = getShareSnippet();
+    const shareMessage = [
+        rawTitle,
+        shareSnippet,
+        `${shareText.messageReadMore} ${canonicalUrl}`,
+        `${shareText.messageHomepage} ${SITE_URL}/`,
+    ].filter(Boolean).join('\n\n');
+    const shareTargets = {
+        x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareMessage)}`,
+        linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(canonicalUrl)}&title=${encodeURIComponent(rawTitle)}&summary=${encodeURIComponent(shareSnippet)}&source=${encodeURIComponent('Agent Arena')}`,
+        medium: 'https://medium.com/new-story',
+        reddit: `https://www.reddit.com/submit?url=${encodeURIComponent(canonicalUrl)}&title=${encodeURIComponent(rawTitle)}`,
+        instagram: 'https://www.instagram.com/',
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(canonicalUrl)}&quote=${encodeURIComponent(shareMessage)}`,
+    };
+    const sharePlatformNames = {
+        x: 'X',
+        linkedin: 'LinkedIn',
+        medium: 'Medium',
+        reddit: 'Reddit',
+        instagram: 'Instagram',
+        facebook: 'Facebook',
+    };
+
+    const copyShareMessage = async () => {
+        if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) return false;
+
+        try {
+            await navigator.clipboard.writeText(shareMessage);
+            return true;
+        } catch (error) {
+            console.error('Error copying share text:', error);
+            return false;
+        }
+    };
+
+    const handleShare = async (platform) => {
+        const targetUrl = shareTargets[platform];
+        const copied = await copyShareMessage();
+
+        setSharePlatform(platform);
+        setIsSharePanelOpen(true);
+
+        if (targetUrl && typeof window !== 'undefined') {
+            window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        setShareNotice(
+            copied
+                ? `${sharePlatformNames[platform] || 'Platform'}${shareText.openedAndCopied}`
+                : `${sharePlatformNames[platform] || 'Platform'}${shareText.openedAndManual}`
+        );
+    };
     const articleJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'BlogPosting',
@@ -559,6 +691,50 @@ export default function BlogPostPage({
                                 <ReactMarkdown components={markdownComponents} rehypePlugins={[rehypeRaw, rehypeSanitize]}>{normalizedPostContent}</ReactMarkdown>
                             </div>
 
+                            {/* Social Share */}
+                            <div className={`mt-12 rounded-xl border p-6 ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-blue-100 text-blue-700'}`}>
+                                        <Share2 size={18} />
+                                    </div>
+                                    <div>
+                                        <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                            {shareText.sectionTitle}
+                                        </h3>
+                                        <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            {shareText.sectionSubtitle}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {[
+                                        { key: 'x', label: shareText.labels.x, icon: Twitter, className: isDark ? 'bg-slate-900 text-white hover:bg-slate-700 border border-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800' },
+                                        { key: 'linkedin', label: shareText.labels.linkedin, icon: Linkedin, className: 'bg-[#0A66C2] text-white hover:bg-[#0958a8]' },
+                                        { key: 'medium', label: shareText.labels.medium, icon: BookOpen, className: isDark ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-slate-800 text-white hover:bg-slate-700' },
+                                        { key: 'reddit', label: shareText.labels.reddit, icon: MessageCircle, className: 'bg-[#FF4500] text-white hover:bg-[#e63f00]' },
+                                        { key: 'instagram', label: shareText.labels.instagram, icon: Instagram, className: 'bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white hover:opacity-90' },
+                                        { key: 'facebook', label: shareText.labels.facebook, icon: Facebook, className: 'bg-[#1877F2] text-white hover:bg-[#1668d3]' },
+                                    ].map((button) => (
+                                        <button
+                                            key={button.key}
+                                            type="button"
+                                            onClick={() => handleShare(button.key)}
+                                            className={`w-full rounded-lg px-4 py-3 text-sm font-semibold transition inline-flex items-center justify-center gap-2 ${button.className}`}
+                                        >
+                                            <button.icon size={16} />
+                                            {button.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {shareNotice ? (
+                                    <p className={`mt-4 text-sm ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
+                                        {shareNotice}
+                                    </p>
+                                ) : null}
+                            </div>
+
                             {/* Newsletter Subscription */}
                             <div className={`mt-12 rounded-xl border p-6 ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
                                 <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -677,6 +853,79 @@ export default function BlogPostPage({
                     </div>
                 </div>
             </div>
+
+            {isSharePanelOpen ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                    <button
+                        type="button"
+                        aria-label="Close share popup"
+                        className="absolute inset-0 bg-black/70"
+                        onClick={() => setIsSharePanelOpen(false)}
+                    />
+                    <div className={`relative w-full max-w-2xl rounded-xl border p-6 shadow-2xl ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+                        <div className="flex items-start justify-between gap-3 mb-4">
+                            <div>
+                                <h4 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                    {`${sharePlatformNames[sharePlatform] || 'Platform'} - ${shareText.popupTitle}`}
+                                </h4>
+                                <p className={`text-sm mt-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                                    {shareText.popupSubtitle}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsSharePanelOpen(false)}
+                                className={`rounded-lg p-2 transition ${isDark ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <textarea
+                            value={shareMessage}
+                            readOnly
+                            rows={8}
+                            className={`w-full rounded-lg border px-3 py-2 text-sm leading-relaxed ${isDark ? 'bg-slate-900 border-slate-600 text-slate-100' : 'bg-slate-900 border-slate-600 text-slate-100'}`}
+                            style={{
+                                backgroundColor: '#0f172a',
+                                color: '#e2e8f0',
+                            }}
+                        />
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const copied = await copyShareMessage();
+                                    setShareNotice(copied ? shareText.copiedAgain : shareText.copyFailed);
+                                }}
+                                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${isDark ? 'bg-cyan-500 text-slate-900 hover:bg-cyan-400' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                            >
+                                {shareText.copy}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const targetUrl = shareTargets[sharePlatform];
+                                    if (targetUrl && typeof window !== 'undefined') {
+                                        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                                    }
+                                }}
+                                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${isDark ? 'bg-slate-700 text-slate-100 hover:bg-slate-600' : 'bg-slate-200 text-slate-900 hover:bg-slate-300'}`}
+                            >
+                                {shareText.openAgain}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsSharePanelOpen(false)}
+                                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${isDark ? 'bg-slate-800 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
+                            >
+                                {shareText.close}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 }
