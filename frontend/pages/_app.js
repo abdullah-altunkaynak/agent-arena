@@ -2,7 +2,6 @@ import Head from "next/head";
 import Script from "next/script";
 import { ThemeProvider } from "next-themes";
 import { useRouter } from "next/router";
-import Footer from "../components/Footer";
 import "../styles/globals.css";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-T8JJ0W8N3G";
@@ -36,7 +35,6 @@ export default function App({ Component, pageProps }) {
       {isBlogPage ? (
         <>
           <Component {...pageProps} />
-          <Footer />
         </>
       ) : (
         <ThemeProvider
@@ -46,7 +44,6 @@ export default function App({ Component, pageProps }) {
           themes={["dark", "light"]}
         >
           <Component {...pageProps} />
-          <Footer />
         </ThemeProvider>
       )}
     </>

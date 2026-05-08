@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import { Plus, MessageSquare, Eye, Heart, ArrowUp, Clock } from 'lucide-react';
+import { ensureSlug } from '@/lib/slug';
 
 export default function CategoryThreadsPage() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function CategoryThreadsPage() {
     const [sortBy, setSortBy] = useState('recent');
     const [skip, setSkip] = useState(0);
     const [hasMore, setHasMore] = useState(true);
+    const [currentUserRole, setCurrentUserRole] = useState(null);
 
     useEffect(() => {
         if (communityId && categoryId) {
@@ -28,6 +30,28 @@ export default function CategoryThreadsPage() {
             fetchThreads();
         }
     }, [communityId, categoryId, sortBy, skip]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const roleFromStorage = localStorage.getItem('user_role');
+        if (roleFromStorage) {
+            setCurrentUserRole(roleFromStorage.toLowerCase());
+            return;
+        }
+
+        try {
+            const userRaw = localStorage.getItem('user');
+            const parsed = userRaw ? JSON.parse(userRaw) : null;
+            if (parsed?.role) {
+                const normalizedRole = String(parsed.role).toLowerCase();
+                setCurrentUserRole(normalizedRole);
+                localStorage.setItem('user_role', normalizedRole);
+            }
+        } catch (error) {
+            console.error('Failed to read role from storage:', error);
+        }
+    }, []);
 
     const fetchCommunityData = async () => {
         try {
@@ -68,6 +92,8 @@ export default function CategoryThreadsPage() {
             }
 
             const params = new URLSearchParams({
+                community_id: communityId,
+                category_id: categoryId,
                 skip: skip,
                 limit: 15,
             });
@@ -80,13 +106,10 @@ export default function CategoryThreadsPage() {
 
             const data = await response.json();
 
-            // Filter by category if needed
-            const filteredThreads = data.filter((t) => t.category_id === categoryId);
-
             if (skip === 0) {
-                setThreads(filteredThreads);
+                setThreads(data);
             } else {
-                setThreads([...threads, ...filteredThreads]);
+                setThreads([...threads, ...data]);
             }
 
             setHasMore(data.length === 15);
@@ -104,6 +127,11 @@ export default function CategoryThreadsPage() {
         if (!token) {
             window.location.href = '/auth/signin';
         } else {
+            const allowedRoles = ['admin', 'moderator', 'user', 'member'];
+            if (currentUserRole && !allowedRoles.includes(currentUserRole)) {
+                alert('Your role is not allowed to create a topic in this category.');
+                return;
+            }
             router.push(`/community/${communityId}/create-thread?categoryId=${categoryId}`);
         }
     };
@@ -150,7 +178,7 @@ export default function CategoryThreadsPage() {
                 />
                 <link
                     rel="canonical"
-                    href={`https://agent-arena.com/community/${communityId}/categories/${categoryId}`}
+                    href={`https://agent-arena.com/community/${communityId}/category/${categoryId}`}
                 />
             </Head>
 
@@ -160,13 +188,9 @@ export default function CategoryThreadsPage() {
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Breadcrumb */}
                     <div className="flex items-center gap-2 mb-8 text-sm text-gray-400">
-                        <Link href="/community">
-                            <a className="hover:text-white transition-colors">Communities</a>
-                        </Link>
+                        <Link href="/community" className="hover:text-white transition-colors">Communities</Link>
                         <span>/</span>
-                        <Link href={`/community/${communityId}`}>
-                            <a className="hover:text-white transition-colors">{community?.name}</a>
-                        </Link>
+                        <Link href={`/community/${communityId}/${ensureSlug(community?.name, 'community')}`} className="hover:text-white transition-colors">{community?.name}</Link>
                         <span>/</span>
                         <span className="text-white font-medium">{category.name}</span>
                     </div>
@@ -191,6 +215,10 @@ export default function CategoryThreadsPage() {
                                 New Discussion
                             </Button>
                         </div>
+
+                        <p className="text-xs text-gray-500 mb-4">
+                            Topic creation permission is controlled by user role.
+                        </p>
 
                         {/* Sort Controls */}
                         <div className="flex gap-4">
@@ -254,56 +282,54 @@ export default function CategoryThreadsPage() {
                         ) : (
                             <>
                                 {threads.map((thread) => (
-                                    <Link key={thread.id} href={`/community/${communityId}/thread/${thread.id}`}>
-                                        <a>
-                                            <Card className="border-slate-700 hover:border-blue-500/50 hover:bg-slate-800/50 transition-all cursor-pointer group p-4">
-                                                <div className="flex gap-4">
-                                                    {/* Thread Content */}
-                                                    <div className="flex-1">
-                                                        <div className="flex items-start justify-between mb-2">
-                                                            <h2 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
-                                                                {thread.title}
-                                                            </h2>
-                                                            {thread.is_pinned && (
-                                                                <span className="text-xs font-semibold px-2 py-1 rounded bg-yellow-500/20 text-yellow-300">
-                                                                    Pinned
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        <p className="text-gray-400 text-sm mb-3 line-clamp-2">{thread.content}</p>
-
-                                                        {/* Thread Meta */}
-                                                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                                                            <span>by {thread.author.username}</span>
-                                                            <span>{formatDate(thread.created_at)}</span>
-                                                        </div>
+                                    <Link key={thread.id} href={`/community/${communityId}/thread/${thread.id}/${ensureSlug(thread.slug || thread.title, 'discussion')}`}>
+                                        <Card className="border-slate-700 hover:border-blue-500/50 hover:bg-slate-800/50 transition-all cursor-pointer group p-4">
+                                            <div className="flex gap-4">
+                                                {/* Thread Content */}
+                                                <div className="flex-1">
+                                                    <div className="flex items-start justify-between mb-2">
+                                                        <h2 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
+                                                            {thread.title}
+                                                        </h2>
+                                                        {thread.is_pinned && (
+                                                            <span className="text-xs font-semibold px-2 py-1 rounded bg-yellow-500/20 text-yellow-300">
+                                                                Pinned
+                                                            </span>
+                                                        )}
                                                     </div>
 
-                                                    {/* Stats */}
-                                                    <div className="flex flex-col gap-2 text-right">
-                                                        <div className="flex items-center gap-2 justify-end text-gray-400">
-                                                            <MessageSquare size={16} className="text-cyan-400" />
-                                                            <span className="font-semibold text-white">{thread.replies_count}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 justify-end text-gray-400">
-                                                            <Eye size={16} className="text-green-400" />
-                                                            <span className="font-semibold text-white">{thread.views_count}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 justify-end text-gray-400">
-                                                            <Heart size={16} className="text-red-400" />
-                                                            <span className="font-semibold text-white">{thread.likes_count}</span>
-                                                        </div>
+                                                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">{thread.content}</p>
+
+                                                    {/* Thread Meta */}
+                                                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                        <span>by {thread.author.username}</span>
+                                                        <span>{formatDate(thread.created_at)}</span>
                                                     </div>
                                                 </div>
 
-                                                {thread.is_locked && (
-                                                    <div className="mt-3 pt-3 border-t border-slate-700 text-xs text-yellow-400">
-                                                        🔒 This discussion is locked
+                                                {/* Stats */}
+                                                <div className="flex flex-col gap-2 text-right">
+                                                    <div className="flex items-center gap-2 justify-end text-gray-400">
+                                                        <MessageSquare size={16} className="text-cyan-400" />
+                                                        <span className="font-semibold text-white">{thread.replies_count}</span>
                                                     </div>
-                                                )}
-                                            </Card>
-                                        </a>
+                                                    <div className="flex items-center gap-2 justify-end text-gray-400">
+                                                        <Eye size={16} className="text-green-400" />
+                                                        <span className="font-semibold text-white">{thread.views_count}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 justify-end text-gray-400">
+                                                        <Heart size={16} className="text-red-400" />
+                                                        <span className="font-semibold text-white">{thread.likes_count}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {thread.is_locked && (
+                                                <div className="mt-3 pt-3 border-t border-slate-700 text-xs text-yellow-400">
+                                                    🔒 This discussion is locked
+                                                </div>
+                                            )}
+                                        </Card>
                                     </Link>
                                 ))}
 

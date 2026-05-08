@@ -28,6 +28,20 @@ router = APIRouter(prefix="/api/auth", tags=["authentication"])
 db_client = SupabaseClient()
 
 
+def resolve_role_name(role_id: Optional[str]) -> Optional[str]:
+    if not role_id:
+        return None
+
+    try:
+        role_result = db_client.client.table("roles").select("name").eq("id", role_id).execute()
+        if role_result.data:
+            return role_result.data[0].get("name")
+    except Exception as role_error:
+        print(f"Role lookup error: {role_error}")
+
+    return None
+
+
 # Pydantic Models for Request/Response
 class RegisterRequest(BaseModel):
     """User registration request"""
@@ -175,6 +189,7 @@ async def register(request: RegisterRequest):
             "full_name": request.full_name or request.username,
             "avatar_url": None,
             "bio": None,
+            "role": resolve_role_name(member_role_id) or "user",
             "email_verified": False,
             "created_at": datetime.utcnow().isoformat(),
         }
@@ -226,6 +241,7 @@ async def login(request: LoginRequest):
             "full_name": user["full_name"],
             "avatar_url": user["avatar_url"],
             "bio": user["bio"],
+            "role": resolve_role_name(user.get("role_id")) or "user",
             "email_verified": user.get("is_email_verified", False),
             "created_at": user["created_at"],
         }

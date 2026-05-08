@@ -2,8 +2,11 @@
  * Community API Client - Frontend utilities for API calls
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const normalizeBaseUrl = (url) => (url ? url.replace(/\/$/, '') : '');
 
+const API_BASE_URL = process.env.NODE_ENV === 'development'
+    ? ''
+    : normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL || '');
 // Helper to get auth header
 const getAuthHeader = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
@@ -54,10 +57,39 @@ export const communityAPI = {
     /**
      * Create a new community (admin only)
      */
-    createCommunity: (name, description, isPublic = true) =>
+    createCommunity: ({
+        name,
+        description,
+        isPublic = true,
+        iconUrl = null,
+        bannerUrl = null,
+        iconFileBase64 = null,
+        iconFileMime = null,
+        bannerFileBase64 = null,
+        bannerFileMime = null,
+    }) =>
         apiCall('/api/community/communities', {
             method: 'POST',
-            body: JSON.stringify({ name, description, is_public: isPublic }),
+            body: JSON.stringify({
+                name,
+                description,
+                is_public: isPublic,
+                icon_url: iconUrl,
+                banner_url: bannerUrl,
+                icon_file_base64: iconFileBase64,
+                icon_file_mime: iconFileMime,
+                banner_file_base64: bannerFileBase64,
+                banner_file_mime: bannerFileMime,
+            }),
+        }),
+
+    /**
+     * Update community appearance/profile (owner or admin)
+     */
+    updateCommunity: (communityId, payload) =>
+        apiCall(`/api/community/communities/${communityId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
         }),
 
     /**
@@ -73,6 +105,47 @@ export const communityAPI = {
                 color,
             }),
         }),
+
+    /**
+     * Community rules CRUD
+     */
+    getCommunityRules: (communityId) =>
+        apiCall(`/api/community/communities/${communityId}/rules`),
+
+    createCommunityRule: (communityId, ruleText) =>
+        apiCall(`/api/community/communities/${communityId}/rules`, {
+            method: 'POST',
+            body: JSON.stringify({ rule_text: ruleText }),
+        }),
+
+    updateCommunityRule: (communityId, ruleId, ruleText) =>
+        apiCall(`/api/community/communities/${communityId}/rules/${ruleId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ rule_text: ruleText }),
+        }),
+
+    deleteCommunityRule: (communityId, ruleId) =>
+        apiCall(`/api/community/communities/${communityId}/rules/${ruleId}`, {
+            method: 'DELETE',
+        }),
+
+    /**
+     * Get current user's XP/level progress
+     */
+    getGamificationProgress: () =>
+        apiCall('/api/community/gamification/progress'),
+
+    /**
+     * Get global leaderboard
+     */
+    getGamificationLeaderboard: (limit = 10) =>
+        apiCall(`/api/community/gamification/leaderboard?limit=${limit}`),
+
+    /**
+     * Get current user's earned badges
+     */
+    getGamificationBadges: () =>
+        apiCall('/api/community/gamification/badges'),
 };
 
 // Thread endpoints
@@ -157,7 +230,7 @@ export const commentAPI = {
      * Create a comment on a thread
      */
     createComment: (threadId, content, parentCommentId = null) =>
-        apiCall(`/api/comments?thread_id=${threadId}`, {
+        apiCall(`/api/threads/${threadId}/comments`, {
             method: 'POST',
             body: JSON.stringify({
                 content,
@@ -192,7 +265,7 @@ export const commentAPI = {
      * Like a comment
      */
     likeComment: (commentId) =>
-        apiCall(`/api/comments/${commentId}/like`, {
+        apiCall(`/api/threads/comments/${commentId}/like`, {
             method: 'POST',
         }),
 
@@ -200,7 +273,7 @@ export const commentAPI = {
      * Unlike a comment
      */
     unlikeComment: (commentId) =>
-        apiCall(`/api/comments/${commentId}/like`, {
+        apiCall(`/api/threads/comments/${commentId}/like`, {
             method: 'DELETE',
         }),
 };

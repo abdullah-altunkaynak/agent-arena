@@ -5,9 +5,13 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
+import GlobalCommunitySidebar from '@/components/community/GlobalCommunitySidebar';
+import { useRouter } from 'next/router';
 import { Search, Plus, Users, MessageSquare, TrendingUp } from 'lucide-react';
+import { ensureSlug } from '@/lib/slug';
 
 export default function CommunitiesPage() {
+    const router = useRouter();
     const [communities, setCommunities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -73,8 +77,7 @@ export default function CommunitiesPage() {
         if (!token) {
             window.location.href = '/auth/signin';
         } else {
-            // In production, this would be an admin-only modal
-            alert('Community creation coming soon - admin only feature');
+            router.push('/community/create');
         }
     };
 
@@ -89,10 +92,11 @@ export default function CommunitiesPage() {
             </Head>
 
             <Navbar />
+            <GlobalCommunitySidebar />
 
             <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-24 pb-16">
                 {/* Header */}
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 lg:pl-24">
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h1 className="text-4xl font-bold text-white mb-2">Communities</h1>
@@ -149,7 +153,7 @@ export default function CommunitiesPage() {
                 </div>
 
                 {/* Communities Grid */}
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 lg:pl-24">
                     {loading && skip === 0 ? (
                         <div className="flex items-center justify-center min-h-96">
                             <div className="text-center">
@@ -176,79 +180,77 @@ export default function CommunitiesPage() {
                         <>
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                                 {filteredCommunities.map((community) => (
-                                    <Link key={community.id} href={`/community/${community.id}`}>
-                                        <a>
-                                            <Card className="h-full hover:border-blue-500/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-blue-500/10 group">
-                                                {/* Banner */}
-                                                {community.banner_url && (
-                                                    <div className="h-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-lg mb-4 overflow-hidden">
+                                    <Link key={community.id} href={`/community/${community.id}/${ensureSlug(community.name, 'community')}`}>
+                                        <Card className="h-full hover:border-blue-500/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-blue-500/10 group">
+                                            {/* Banner */}
+                                            {community.banner_url && (
+                                                <div className="h-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-lg mb-4 overflow-hidden">
+                                                    <img
+                                                        src={community.banner_url}
+                                                        alt={community.name}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {/* Content */}
+                                            <div className="p-4">
+                                                {/* Icon + Badge */}
+                                                <div className="flex items-start justify-between mb-3">
+                                                    {community.icon_url && (
                                                         <img
-                                                            src={community.banner_url}
+                                                            src={community.icon_url}
                                                             alt={community.name}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                            className="w-12 h-12 rounded-lg"
                                                         />
-                                                    </div>
+                                                    )}
+                                                    {!community.is_public && (
+                                                        <span className="text-xs font-semibold px-2 py-1 rounded bg-purple-500/20 text-purple-300">
+                                                            Private
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Name & Description */}
+                                                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+                                                    {community.name}
+                                                </h3>
+                                                {community.description && (
+                                                    <p className="text-sm text-gray-400 mb-4 line-clamp-2">
+                                                        {community.description}
+                                                    </p>
                                                 )}
 
-                                                {/* Content */}
-                                                <div className="p-4">
-                                                    {/* Icon + Badge */}
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        {community.icon_url && (
-                                                            <img
-                                                                src={community.icon_url}
-                                                                alt={community.name}
-                                                                className="w-12 h-12 rounded-lg"
-                                                            />
-                                                        )}
-                                                        {!community.is_public && (
-                                                            <span className="text-xs font-semibold px-2 py-1 rounded bg-purple-500/20 text-purple-300">
-                                                                Private
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Name & Description */}
-                                                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
-                                                        {community.name}
-                                                    </h3>
-                                                    {community.description && (
-                                                        <p className="text-sm text-gray-400 mb-4 line-clamp-2">
-                                                            {community.description}
-                                                        </p>
-                                                    )}
-
-                                                    {/* Stats */}
-                                                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-700">
-                                                        <div className="flex items-center gap-2">
-                                                            <Users size={16} className="text-blue-400" />
-                                                            <div>
-                                                                <p className="text-xs text-gray-500">Members</p>
-                                                                <p className="font-semibold text-white">
-                                                                    {community.members_count.toLocaleString()}
-                                                                </p>
-                                                            </div>
+                                                {/* Stats */}
+                                                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-700">
+                                                    <div className="flex items-center gap-2">
+                                                        <Users size={16} className="text-blue-400" />
+                                                        <div>
+                                                            <p className="text-xs text-gray-500">Members</p>
+                                                            <p className="font-semibold text-white">
+                                                                {community.members_count.toLocaleString()}
+                                                            </p>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <MessageSquare size={16} className="text-green-400" />
-                                                            <div>
-                                                                <p className="text-xs text-gray-500">Threads</p>
-                                                                <p className="font-semibold text-white">
-                                                                    {community.threads_count}
-                                                                </p>
-                                                            </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <MessageSquare size={16} className="text-green-400" />
+                                                        <div>
+                                                            <p className="text-xs text-gray-500">Threads</p>
+                                                            <p className="font-semibold text-white">
+                                                                {community.threads_count}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                {/* Footer CTA */}
-                                                <div className="px-4 pb-4">
-                                                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm">
-                                                        View Community
-                                                    </Button>
-                                                </div>
-                                            </Card>
-                                        </a>
+                                            {/* Footer CTA */}
+                                            <div className="px-4 pb-4">
+                                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm">
+                                                    View Community
+                                                </Button>
+                                            </div>
+                                        </Card>
                                     </Link>
                                 ))}
                             </div>

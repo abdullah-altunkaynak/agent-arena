@@ -340,7 +340,7 @@ export default function Home() {
                     rel="noreferrer"
                     className="flex items-center gap-2 px-4 py-3 rounded-xl bg-forge border border-[rgba(255,255,255,.07)] text-wire hover:text-cyan-400 hover:border-cyan-400/35 transition-all"
                   >
-                    <Image src="https://img.icons8.com/fluency-systems-filled/48/github.png" alt="GitHub" width={20} height={20} className="w-5 h-5 opacity-90" />
+                    <Image src="https://img.icons8.com/fluency-systems-filled/48/github.png" alt="GitHub" width={20} height={20} unoptimized={true} className="w-5 h-5 opacity-90" />
                     <span className="text-xs font-mono">GitHub</span>
                   </a>
                   <a
@@ -349,14 +349,14 @@ export default function Home() {
                     rel="noreferrer"
                     className="flex items-center gap-2 px-4 py-3 rounded-xl bg-forge border border-[rgba(255,255,255,.07)] text-wire hover:text-cyan-400 hover:border-cyan-400/35 transition-all"
                   >
-                    <Image src="https://img.icons8.com/fluency-systems-filled/48/linkedin.png" alt="LinkedIn" width={20} height={20} className="w-5 h-5 opacity-90" />
+                    <Image src="https://img.icons8.com/fluency-systems-filled/48/linkedin.png" alt="LinkedIn" width={20} height={20} unoptimized={true} className="w-5 h-5 opacity-90" />
                     <span className="text-xs font-mono">LinkedIn</span>
                   </a>
                   <a
                     href={`mailto:${PUBLIC_PROFILE.email}`}
                     className="flex items-center gap-2 px-4 py-3 rounded-xl bg-forge border border-[rgba(255,255,255,.07)] text-wire hover:text-cyan-400 hover:border-cyan-400/35 transition-all"
                   >
-                    <Image src="https://img.icons8.com/fluency-systems-filled/48/new-post.png" alt="Email" width={20} height={20} className="w-5 h-5 opacity-90" />
+                    <Image src="https://img.icons8.com/fluency-systems-filled/48/new-post.png" alt="Email" width={20} height={20} unoptimized={true} className="w-5 h-5 opacity-90" />
                     <span className="text-xs font-mono">Email</span>
                   </a>
                 </div>

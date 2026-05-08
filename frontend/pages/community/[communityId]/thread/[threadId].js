@@ -6,12 +6,14 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
-import { threadAPI, commentAPI, formatDate } from '@/lib/communityAPI';
+import CommunityXpToast from '@/components/community/CommunityXpToast';
+import { threadAPI, commentAPI, communityAPI, formatDate } from '@/lib/communityAPI';
+import { ensureSlug } from '@/lib/slug';
+import { publishCommunityXpNotice } from '@/lib/communityXp';
 import {
     ArrowLeft,
     Heart,
     MessageCircle,
-    Share2,
     MoreVertical,
     Lock,
     Pin,
@@ -20,9 +22,71 @@ import {
     Eye,
 } from 'lucide-react';
 
+const buildCommentTree = (flatComments) => {
+    const byId = new Map();
+    const roots = [];
+
+    flatComments.forEach((rawComment) => {
+        byId.set(rawComment.id, {
+            ...rawComment,
+            replies: [],
+        });
+    });
+
+    byId.forEach((comment) => {
+        if (comment.parent_comment_id && byId.has(comment.parent_comment_id)) {
+            byId.get(comment.parent_comment_id).replies.push(comment);
+        } else {
+            roots.push(comment);
+        }
+    });
+
+    return roots;
+};
+
+const updateCommentTreeLike = (nodes, commentId) => (
+    nodes.map((node) => {
+        if (node.id === commentId) {
+            return {
+                ...node,
+                likes_count: (node.likes_count || 0) + 1,
+            };
+        }
+
+        if (!node.replies || node.replies.length === 0) {
+            return node;
+        }
+
+        return {
+            ...node,
+            replies: updateCommentTreeLike(node.replies, commentId),
+        };
+    })
+);
+
+const findCommentById = (nodes, commentId) => {
+    for (const node of nodes) {
+        if (node.id === commentId) {
+            return node;
+        }
+
+        if (node.replies?.length) {
+            const found = findCommentById(node.replies, commentId);
+            if (found) return found;
+        }
+    }
+
+    return null;
+};
+
+const normalizeStatusBadges = (author) => {
+    if (!Array.isArray(author?.status_badges)) return [];
+    return author.status_badges.slice(0, 2);
+};
+
 export default function ThreadDetailPage() {
     const router = useRouter();
-    const { id: communityId, threadId } = router.query;
+    const { communityId, threadId } = router.query;
 
     const [thread, setThread] = useState(null);
     const [comments, setComments] = useState([]);
@@ -32,6 +96,7 @@ export default function ThreadDetailPage() {
     const [currentUser, setCurrentUser] = useState(null);
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(0);
+    const [likedCommentIds, setLikedCommentIds] = useState([]);
 
     // Comment submission
     const [newComment, setNewComment] = useState('');
@@ -44,17 +109,42 @@ export default function ThreadDetailPage() {
     const [skip, setSkip] = useState(0);
     const [hasMoreComments, setHasMoreComments] = useState(true);
 
-    useEffect(() => {
-        // Get current user
-        const token = localStorage.getItem('access_token');
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            try {
-                setCurrentUser(JSON.parse(userStr));
-            } catch (e) {
-                console.error('Failed to parse user:', e);
+    const getUserFromStorage = () => {
+        try {
+            const rawUser = localStorage.getItem('user');
+            if (rawUser) {
+                const parsedUser = JSON.parse(rawUser);
+                if (parsedUser?.id || parsedUser?.username || parsedUser?.full_name) {
+                    return parsedUser;
+                }
             }
+
+            const token = localStorage.getItem('access_token');
+            if (!token || token.split('.').length < 2) return null;
+
+            const payloadPart = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+                atob(payloadPart)
+                    .split('')
+                    .map((ch) => `%${(`00${ch.charCodeAt(0).toString(16)}`).slice(-2)}`)
+                    .join('')
+            );
+            const payload = JSON.parse(jsonPayload);
+
+            if (!payload?.username && !payload?.sub) return null;
+
+            return {
+                id: payload.sub || payload.user_id || payload.id || payload.username,
+                username: payload.username || payload.sub || 'User',
+                full_name: payload.full_name || payload.username || payload.sub || 'User',
+            };
+        } catch {
+            return null;
         }
+    };
+
+    useEffect(() => {
+        setCurrentUser(getUserFromStorage());
 
         if (threadId) {
             fetchThread();
@@ -81,12 +171,26 @@ export default function ThreadDetailPage() {
         try {
             setCommentsLoading(true);
             const data = await threadAPI.getThreadComments(threadId, skip, 20);
+            const incoming = Array.isArray(data) ? data : [];
+
             if (skip === 0) {
-                setComments(data);
+                setComments(buildCommentTree(incoming));
             } else {
-                setComments([...comments, ...data]);
+                const flatExisting = comments.flatMap(function flatten(comment) {
+                    return [
+                        { ...comment, replies: undefined },
+                        ...(comment.replies || []).flatMap(flatten),
+                    ];
+                });
+
+                const dedupedById = new Map();
+                [...flatExisting, ...incoming].forEach((comment) => {
+                    dedupedById.set(comment.id, { ...comment, replies: undefined });
+                });
+
+                setComments(buildCommentTree(Array.from(dedupedById.values())));
             }
-            setHasMoreComments(data.length === 20);
+            setHasMoreComments(incoming.length === 20);
             setError(null);
         } catch (err) {
             console.error('Fetch comments error:', err);
@@ -97,7 +201,8 @@ export default function ThreadDetailPage() {
     };
 
     const handleLike = async () => {
-        if (!currentUser) {
+        const user = currentUser || getUserFromStorage();
+        if (!user) {
             router.push('/auth/signin?redirect=' + encodeURIComponent(router.asPath));
             return;
         }
@@ -111,6 +216,26 @@ export default function ThreadDetailPage() {
             if (err.message.includes('Already liked')) {
                 setLiked(true);
             }
+        }
+    };
+
+    const handleCommentLike = async (commentId) => {
+        const user = currentUser || getUserFromStorage();
+        if (!user) {
+            router.push('/auth/signin?redirect=' + encodeURIComponent(router.asPath));
+            return;
+        }
+
+        if (likedCommentIds.includes(commentId)) {
+            return;
+        }
+
+        try {
+            await commentAPI.likeComment(commentId);
+            setLikedCommentIds((prev) => [...prev, commentId]);
+            setComments((prevComments) => updateCommentTreeLike(prevComments, commentId));
+        } catch (err) {
+            console.error('Comment like error:', err);
         }
     };
 
@@ -131,22 +256,38 @@ export default function ThreadDetailPage() {
             setSubmitting(true);
             setCommentError(null);
 
-            const comment = await commentAPI.createComment(
+            const progressBefore = await communityAPI.getGamificationProgress().catch(() => null);
+
+            await commentAPI.createComment(
                 threadId,
                 newComment.trim(),
                 replyingTo
             );
 
-            // Add comment to list
-            setComments([comment, ...comments]);
             setNewComment('');
             setReplyingTo(null);
             setCommentSuccess(true);
 
             setTimeout(() => setCommentSuccess(false), 3000);
 
-            // Refresh thread to get updated reply count
-            fetchThread();
+            const progressAfter = await communityAPI.getGamificationProgress().catch(() => null);
+            const pointsBefore = Number(progressBefore?.points_total || 0);
+            const pointsAfter = Number(progressAfter?.points_total || 0);
+            const levelBefore = Number(progressBefore?.level || 1);
+            const levelAfter = Number(progressAfter?.level || levelBefore);
+
+            publishCommunityXpNotice({
+                communityId,
+                xpGained: Math.max(0, pointsAfter - pointsBefore) || 5,
+                levelBefore,
+                levelAfter,
+                reason: 'Comment posted successfully.',
+            });
+
+            // Re-fetch list to preserve threaded hierarchy after reply.
+            setSkip(0);
+            await fetchComments();
+            await fetchThread();
         } catch (err) {
             console.error('Submit comment error:', err);
             setCommentError(err.message || 'Failed to post comment');
@@ -157,10 +298,13 @@ export default function ThreadDetailPage() {
 
     const CommentItem = ({ comment, depth = 0 }) => {
         const isAuthor = currentUser?.id === comment.author.id;
+        const parentComment = comment.parent_comment_id ? findCommentById(comments, comment.parent_comment_id) : null;
+        const replyTarget = parentComment?.author?.username || parentComment?.author?.full_name || null;
+        const clampedDepth = Math.min(depth, 5);
 
         return (
-            <div className={`${depth > 0 ? 'ml-8 mt-4' : 'border-t border-slate-700 pt-4'}`}>
-                <Card className={`border-slate-700 ${depth > 0 ? 'bg-slate-800/50' : ''}`}>
+            <div className={`${depth > 0 ? 'mt-3 pl-4 border-l-2 border-cyan-500/30' : 'border-t border-slate-700 pt-4'}`} style={depth > 0 ? { marginLeft: `${clampedDepth * 12}px` } : undefined}>
+                <Card className={`border-slate-700 ${depth > 0 ? 'bg-slate-800/60' : ''}`}>
                     <div className="p-4">
                         {/* Comment Header */}
                         <div className="flex items-start justify-between mb-3">
@@ -183,6 +327,16 @@ export default function ThreadDetailPage() {
                                     <p className="text-xs text-gray-500">
                                         @{comment.author.username} • {formatDate(comment.created_at)}
                                     </p>
+                                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                        <span className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-200">
+                                            L{comment.author.level || 1}
+                                        </span>
+                                        {normalizeStatusBadges(comment.author).map((badge) => (
+                                            <span key={`${comment.id}-${badge.id || badge.name}`} className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
+                                                {badge.icon ? `${badge.icon} ` : ''}{badge.name || 'Badge'}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                             {isAuthor && (
@@ -191,6 +345,12 @@ export default function ThreadDetailPage() {
                                 </button>
                             )}
                         </div>
+
+                        {replyTarget ? (
+                            <p className="mb-2 text-xs text-cyan-300/90">
+                                Replying to @{replyTarget}
+                            </p>
+                        ) : null}
 
                         {/* Comment Edited Badge */}
                         {comment.is_edited && (
@@ -202,11 +362,16 @@ export default function ThreadDetailPage() {
 
                         {/* Comment Actions */}
                         <div className="flex gap-4 text-sm">
-                            <button className="flex items-center gap-1 text-gray-400 hover:text-red-400 transition-colors">
+                            <button
+                                type="button"
+                                onClick={() => handleCommentLike(comment.id)}
+                                className="flex items-center gap-1 text-gray-400 hover:text-red-400 transition-colors"
+                            >
                                 <Heart size={16} />
                                 <span>{comment.likes_count}</span>
                             </button>
                             <button
+                                type="button"
                                 onClick={() => setReplyingTo(comment.id)}
                                 className="flex items-center gap-1 text-gray-400 hover:text-blue-400 transition-colors"
                             >
@@ -270,6 +435,8 @@ export default function ThreadDetailPage() {
         );
     }
 
+    const canonicalThreadSlug = ensureSlug(thread?.slug || thread?.title, 'discussion');
+
     return (
         <>
             <Head>
@@ -277,10 +444,11 @@ export default function ThreadDetailPage() {
                 <meta name="description" content={thread.content.substring(0, 150)} />
                 <meta property="og:title" content={thread.title} />
                 <meta property="og:description" content={thread.content.substring(0, 150)} />
-                <link rel="canonical" href={`https://agent-arena.com/community/${communityId}/thread/${threadId}`} />
+                <link rel="canonical" href={`https://agent-arena.com/community/${communityId}/thread/${threadId}/${canonicalThreadSlug}`} />
             </Head>
 
             <Navbar />
+            <CommunityXpToast communityId={communityId} />
 
             <main className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen pb-16 pt-24">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -341,6 +509,16 @@ export default function ThreadDetailPage() {
                                     <p className="text-sm text-gray-500">
                                         @{thread.author.username} • {formatDate(thread.created_at)}
                                     </p>
+                                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                        <span className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-200">
+                                            L{thread.author.level || 1}
+                                        </span>
+                                        {normalizeStatusBadges(thread.author).map((badge) => (
+                                            <span key={`thread-${badge.id || badge.name}`} className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
+                                                {badge.icon ? `${badge.icon} ` : ''}{badge.name || 'Badge'}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-6 text-sm text-gray-400">
@@ -365,17 +543,13 @@ export default function ThreadDetailPage() {
                                 <Button
                                     onClick={handleLike}
                                     disabled={liked}
-                                    className={`flex items-center gap-2 flex-1 ${liked
+                                    className={`flex items-center justify-center gap-2 w-full ${liked
                                         ? 'bg-red-600/20 text-red-400 cursor-default'
                                         : 'bg-slate-700 hover:bg-slate-600 text-gray-200'
                                         }`}
                                 >
                                     <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
                                     <span>{likeCount} Likes</span>
-                                </Button>
-                                <Button onClick={() => setReplyingTo(null)} className="flex items-center gap-2 flex-1 bg-slate-700 hover:bg-slate-600">
-                                    <Share2 size={18} />
-                                    Share
                                 </Button>
                             </div>
 
@@ -426,9 +600,15 @@ export default function ThreadDetailPage() {
                                     <form onSubmit={handleCommentSubmit}>
                                         {replyingTo && (
                                             <div className="mb-4 p-3 bg-slate-800 rounded-lg flex items-center justify-between">
-                                                <p className="text-sm text-gray-300">
-                                                    Replying to comment... <span className="text-blue-400 font-medium">ID: {replyingTo.substring(0, 8)}</span>
-                                                </p>
+                                                {(() => {
+                                                    const parent = findCommentById(comments, replyingTo);
+                                                    const replyName = parent?.author?.username || parent?.author?.full_name;
+                                                    return (
+                                                        <p className="text-sm text-gray-300">
+                                                            Replying to {replyName ? `@${replyName}` : 'comment'} <span className="text-blue-400 font-medium">ID: {replyingTo.substring(0, 8)}</span>
+                                                        </p>
+                                                    );
+                                                })()}
                                                 <button
                                                     type="button"
                                                     onClick={() => setReplyingTo(null)}

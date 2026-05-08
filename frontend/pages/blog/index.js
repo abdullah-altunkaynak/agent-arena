@@ -42,6 +42,7 @@ export default function BlogPage() {
     const isDark = true;
     const isEnglish = language === 'en';
     const normalizeLang = (value) => (value === 'tr' ? 'tr' : 'en');
+    const isExternalImage = (src) => typeof src === 'string' && /^https?:\/\//i.test(src);
 
     // i18n strings
     const t = {
@@ -473,6 +474,7 @@ export default function BlogPage() {
                                                 src={post.featured_image_url}
                                                 alt={getPostTitle(post)}
                                                 fill
+                                                unoptimized={isExternalImage(post.featured_image_url)}
                                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 200px"
                                                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
@@ -567,6 +569,7 @@ export default function BlogPage() {
                                                 alt={getPostTitle(featuredPost)}
                                                 fill
                                                 priority
+                                                unoptimized={isExternalImage(featuredPost.featured_image_url)}
                                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 900px"
                                                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
@@ -647,6 +650,7 @@ export default function BlogPage() {
                                                             src={post.featured_image_url}
                                                             alt={getPostTitle(post)}
                                                             fill
+                                                            unoptimized={isExternalImage(post.featured_image_url)}
                                                             sizes="128px"
                                                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                                                         />

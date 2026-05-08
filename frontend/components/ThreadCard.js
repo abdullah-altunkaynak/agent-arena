@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { MessageCircle, Eye, ThumbsUp, Clock } from 'lucide-react';
 import { formatDate, truncateText } from '@/lib/communityAPI';
+import { ensureSlug } from '@/lib/slug';
 
 /**
  * ThreadCard Component
@@ -14,13 +15,13 @@ export default function ThreadCard({
     showCategory = false,
 }) {
     const [hovering, setHovering] = useState(false);
+    const threadSlug = ensureSlug(thread?.slug || thread?.title, 'discussion');
 
     return (
         <Link
-            href={`/community/${communityId}/thread/${thread.id}`}
-            as={`/community/${communityId}/thread/${thread.id}`}
+            href={`/community/${communityId}/thread/${thread.id}/${threadSlug}`}
         >
-            <a
+            <div
                 className="block group"
                 onMouseEnter={() => setHovering(true)}
                 onMouseLeave={() => setHovering(false)}
@@ -87,7 +88,7 @@ export default function ThreadCard({
                         )}
                     </div>
                 </div>
-            </a>
+            </div>
         </Link>
     );
 }

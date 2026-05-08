@@ -5,7 +5,7 @@ Handles user registration, login, and token refresh
 
 import uuid
 import sys
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import APIRouter, HTTPException, status, Body
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
@@ -16,9 +16,6 @@ from blog.database import BlogDatabaseService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 db_client = BlogDatabaseService()
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 # Request Models
@@ -50,13 +47,23 @@ class AuthResponse(BaseModel):
 
 
 def hash_password(password: str) -> str:
-    """Hash password using bcrypt"""
-    return pwd_context.hash(password)
+    """Hash password using bcrypt directly for runtime compatibility."""
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify password against hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify password against bcrypt hash."""
+    if not hashed_password:
+        return False
+
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8"),
+        )
+    except Exception as verify_error:
+        print(f"Password verify error: {verify_error}", file=sys.stderr, flush=True)
+        return False
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)

@@ -3,7 +3,7 @@ User Profile API Routes
 """
 from fastapi import APIRouter, HTTPException, status, Header, Depends
 from pydantic import BaseModel, validator, EmailStr
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid
@@ -14,6 +14,7 @@ from backend.blog.database import SupabaseClient
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 db_client = SupabaseClient()
+LEVEL_STEP_POINTS = 100
 
 
 # Pydantic Models
@@ -61,6 +62,24 @@ class UserStatsResponse(BaseModel):
     last_active: Optional[str]
 
 
+class LevelProgressResponse(BaseModel):
+    user_id: str
+    points_total: int
+    level: int
+    points_in_level: int
+    points_to_next_level: int
+
+
+class LeaderboardItemResponse(BaseModel):
+    rank: int
+    user_id: str
+    username: str
+    full_name: Optional[str]
+    avatar_url: Optional[str]
+    points_total: int
+    level: int
+
+
 class BadgeResponse(BaseModel):
     """Badge response"""
     id: str
@@ -94,6 +113,21 @@ def get_current_user_id(authorization: Optional[str] = Header(None)) -> str:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     return payload.get("sub")
+
+
+def _safe_int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+
+def _get_level_progress(points_total: int) -> tuple[int, int, int]:
+    points = max(0, _safe_int(points_total, 0))
+    level = (points // LEVEL_STEP_POINTS) + 1
+    points_in_level = points % LEVEL_STEP_POINTS
+    points_to_next_level = LEVEL_STEP_POINTS - points_in_level
+    return level, points_in_level, points_to_next_level
 
 
 # Routes
@@ -212,6 +246,93 @@ async def get_user_stats(current_user_id: str = Depends(get_current_user_id)):
     except Exception as e:
         print(f"Get stats error: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve stats")
+
+
+@router.get("/stats/progress", response_model=LevelProgressResponse)
+async def get_user_level_progress(current_user_id: str = Depends(get_current_user_id)):
+    """Return XP and level progress for current user."""
+    try:
+        profile_result = (
+            db_client.client.table("user_profiles")
+            .select("points_total, level")
+            .eq("user_id", current_user_id)
+            .limit(1)
+            .execute()
+        )
+
+        if not profile_result.data:
+            level, points_in_level, points_to_next_level = _get_level_progress(0)
+            return LevelProgressResponse(
+                user_id=current_user_id,
+                points_total=0,
+                level=level,
+                points_in_level=points_in_level,
+                points_to_next_level=points_to_next_level,
+            )
+
+        profile = profile_result.data[0]
+        points_total = _safe_int(profile.get("points_total"), 0)
+        level, points_in_level, points_to_next_level = _get_level_progress(points_total)
+
+        return LevelProgressResponse(
+            user_id=current_user_id,
+            points_total=points_total,
+            level=_safe_int(profile.get("level"), level),
+            points_in_level=points_in_level,
+            points_to_next_level=points_to_next_level,
+        )
+    except Exception as e:
+        print(f"Get level progress error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve level progress")
+
+
+@router.get("/leaderboard", response_model=List[LeaderboardItemResponse])
+async def get_users_leaderboard(limit: int = 20):
+    """Return top users by points/level for community leaderboard."""
+    try:
+        safe_limit = max(1, min(limit, 100))
+
+        profile_result = (
+            db_client.client.table("user_profiles")
+            .select("user_id, points_total, level")
+            .order("points_total", desc=True)
+            .range(0, safe_limit - 1)
+            .execute()
+        )
+
+        if not profile_result.data:
+            return []
+
+        user_ids = [row["user_id"] for row in profile_result.data]
+        users_result = (
+            db_client.client.table("users")
+            .select("id, username, full_name, avatar_url")
+            .in_("id", user_ids)
+            .execute()
+        )
+        user_map = {u["id"]: u for u in (users_result.data or [])}
+
+        leaderboard = []
+        for index, row in enumerate(profile_result.data):
+            user = user_map.get(row["user_id"], {})
+            points_total = _safe_int(row.get("points_total"), 0)
+            fallback_level, _, _ = _get_level_progress(points_total)
+            leaderboard.append(
+                LeaderboardItemResponse(
+                    rank=index + 1,
+                    user_id=row["user_id"],
+                    username=user.get("username") or "unknown",
+                    full_name=user.get("full_name"),
+                    avatar_url=user.get("avatar_url"),
+                    points_total=points_total,
+                    level=_safe_int(row.get("level"), fallback_level),
+                )
+            )
+
+        return leaderboard
+    except Exception as e:
+        print(f"Get leaderboard error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve leaderboard")
 
 
 @router.get("/badges", response_model=list[BadgeResponse])

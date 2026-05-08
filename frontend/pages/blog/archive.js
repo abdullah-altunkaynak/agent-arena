@@ -36,6 +36,7 @@ export default function BlogArchivePage({ posts = [], page = 1, totalPages = 1, 
     const getPostExcerpt = (post) => isEnglish ? (post.excerpt_en || post.excerpt_tr) : (post.excerpt_tr || post.excerpt_en);
     const getPostExcerptHtml = (post) => normalizeBlogExcerptHtml(getPostExcerpt(post));
     const getViewCount = (post) => Number(post?.view_count ?? post?.views ?? post?.viewCount ?? 0) || 0;
+    const isExternalImage = (src) => typeof src === 'string' && /^https?:\/\//i.test(src);
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
@@ -105,6 +106,7 @@ export default function BlogArchivePage({ posts = [], page = 1, totalPages = 1, 
                                             src={post.featured_image_url}
                                             alt={getPostTitle(post)}
                                             fill
+                                            unoptimized={isExternalImage(post.featured_image_url)}
                                             sizes="(max-width: 640px) 144px, 176px"
                                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                                         />

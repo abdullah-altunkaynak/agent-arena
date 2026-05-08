@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 
 # Import your app and models
 from backend.main import app
-from backend.engine.base_agent import Base
+from backend.engine.community_models import Base
 
 # Use in-memory SQLite for tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"

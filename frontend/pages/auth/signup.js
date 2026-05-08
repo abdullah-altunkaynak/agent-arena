@@ -16,6 +16,23 @@ export default function SignUp() {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+
+    const extractUsernameFromToken = (token) => {
+        try {
+            if (!token || token.split('.').length < 2) return null;
+            const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            const json = decodeURIComponent(
+                atob(payload)
+                    .split('')
+                    .map((ch) => `%${(`00${ch.charCodeAt(0).toString(16)}`).slice(-2)}`)
+                    .join('')
+            );
+            const parsed = JSON.parse(json);
+            return parsed?.username || null;
+        } catch {
+            return null;
+        }
+    };
     const [passwordStrength, setPasswordStrength] = useState(0);
 
     // Calculate password strength
@@ -102,7 +119,16 @@ export default function SignUp() {
                 const data = await response.json();
                 localStorage.setItem('access_token', data.access_token);
                 localStorage.setItem('refresh_token', data.refresh_token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                const fallbackUsername = extractUsernameFromToken(data.access_token);
+                const safeUser = data?.user || (fallbackUsername ? { username: fallbackUsername, full_name: fallbackUsername } : null);
+                if (safeUser) {
+                    localStorage.setItem('user', JSON.stringify(safeUser));
+                } else {
+                    localStorage.removeItem('user');
+                }
+                if (data?.user?.role) {
+                    localStorage.setItem('user_role', data.user.role);
+                }
 
                 setSuccessMessage('Account created successfully! Redirecting to the community...');
                 setTimeout(() => {

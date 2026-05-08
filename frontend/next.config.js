@@ -47,7 +47,9 @@ const nextConfig = {
       : (process.env.NEXT_PUBLIC_API_URL || 'https://api.agentarena.me');
 
     return {
-      beforeFiles: [
+      // Keep file-system API routes (e.g. /pages/api/community/[...path].js) as first priority,
+      // then proxy all remaining /api/* requests to the backend service.
+      fallback: [
         {
           source: '/api/:path*',
           destination: `${backendUrl}/api/:path*`,
