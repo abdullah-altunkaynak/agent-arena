@@ -13,6 +13,7 @@ export default function Document({ __NEXT_DATA__ }) {
                 <meta name="yandex-verification" content="71f35be062829989" />
 
                 {/* Google AdSense */}
+                <meta name="google-adsense-account" content="ca-pub-3863550667981849" />
                 <Script
                     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3863550667981849"
                     async
