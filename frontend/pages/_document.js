@@ -9,6 +9,17 @@ export default function Document({ __NEXT_DATA__ }) {
     return (
         <Html lang={lang}>
             <Head>
+                {/* Yandex Search Console */}
+                <meta name="yandex-verification" content="71f35be062829989" />
+
+                {/* Google AdSense */}
+                <Script
+                    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3863550667981849"
+                    async
+                    crossOrigin="anonymous"
+                    strategy="afterInteractive"
+                />
+
                 {/* Ahrefs Web Analytics */}
                 <Script
                     src="https://analytics.ahrefs.com/analytics.js"
