@@ -15,6 +15,7 @@ const footerSections = [
         title: 'Menu',
         links: [
             { label: 'Home', href: '/' },
+            { label: 'About', href: '/about' },
             { label: 'Arena', href: '/arena' },
             { label: 'Agents', href: '/agents' },
             { label: 'Blog', href: '/blog' },

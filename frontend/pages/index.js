@@ -2,7 +2,8 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Cpu, Zap, Bot, ChevronRight, Shield, GitBranch, Activity, ArrowRight, Terminal as TermIcon } from "lucide-react";
+import { useState } from "react";
+import { Cpu, Zap, Bot, ChevronRight, Shield, GitBranch, Activity, ArrowRight, Smartphone, Cloud, Store, Megaphone, Globe2, Sparkles, Terminal as TermIcon } from "lucide-react";
 import { BookOpen } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Button from "../components/Button";
@@ -45,6 +46,86 @@ const STATS = [
 
 const TECH = ["Next.js", "FastAPI", "Python", "Framer Motion", "Tailwind CSS", "Docker"];
 
+const N8N_TR_FEATURES = [
+  "n8n ile akışları dakikalar içinde kurulum",
+  "Tam otomatik post üretimi ve planlama",
+  "Eski yazılarda SEO puanlama ve iyileştirme",
+  "Pexels kaynaklı görsel otomasyonu",
+  "Uygun fiyatlı kurulum + isteğe bağlı geliştirme",
+];
+
+const N8N_EN_FEATURES = [
+  "Spin up n8n workflows in minutes",
+  "Fully automated post generation and scheduling",
+  "SEO scoring and improvements for legacy posts",
+  "Pexels-sourced image automation",
+  "Affordable setup with optional custom builds",
+];
+
+const MOBILE_TR_FEATURES = [
+  "İsteğe özel iOS ve Android mobil uygulama geliştirme",
+  "Cloud API ile güçlü yapay zeka entegrasyonu",
+  "Kullanıcı cihazında lokal çalışan AI entegrasyonu",
+  "Store takipleri, reklam planlama ve yayın desteği",
+  "Uygulamaya özel web sitesi + otomatik post sistem bağlantısı",
+];
+
+const MOBILE_EN_FEATURES = [
+  "Custom iOS and Android app development",
+  "Cloud API based AI integration for scalable features",
+  "On-device local AI integration on user devices",
+  "Store tracking, ad planning, and launch support",
+  "Dedicated website + automated post system integration",
+];
+
+const MOBILE_TIMELINE = [
+  {
+    icon: Smartphone,
+    trTitle: "Mobil ürün stratejisi ve UX kurgusu",
+    enTitle: "Mobile product strategy and UX design",
+    trDesc: "Hedef kitleye göre iOS/Android mimarisi, ekran akışları ve ölçeklenebilir ürün planı oluşturuyoruz.",
+    enDesc: "We define iOS/Android architecture, screen flows, and a scalable roadmap aligned with your audience.",
+    trTag: "Ürün Tasarımı",
+    enTag: "Product Design",
+  },
+  {
+    icon: Cloud,
+    trTitle: "Cloud API veya lokal AI entegrasyonu",
+    enTitle: "Cloud API or on-device AI integration",
+    trDesc: "İhtiyaca göre bulut tabanlı LLM API'leri ya da kullanıcı cihazında çalışan lokal AI modellerini entegre ediyoruz.",
+    enDesc: "Depending on your needs, we integrate cloud LLM APIs or local on-device AI models running on user hardware.",
+    trTag: "AI Katmanı",
+    enTag: "AI Layer",
+  },
+  {
+    icon: Store,
+    trTitle: "Store yayın ve takip otomasyonu",
+    enTitle: "Store launch and monitoring automation",
+    trDesc: "App Store ve Google Play süreçlerinde sürüm takibi, metrik izleme ve yayın sonrası optimizasyon desteği sağlıyoruz.",
+    enDesc: "We support App Store and Google Play release tracking, KPI monitoring, and post-launch optimization workflows.",
+    trTag: "Store Ops",
+    enTag: "Store Ops",
+  },
+  {
+    icon: Megaphone,
+    trTitle: "Reklam operasyonu ve büyüme kurgusu",
+    enTitle: "Ad operations and growth orchestration",
+    trDesc: "Kampanya yapıları, kreatif döngüler ve performans odaklı reklam süreçleriyle kullanıcı kazanımını hızlandırıyoruz.",
+    enDesc: "We accelerate user acquisition with campaign structures, creative loops, and performance-driven ad operations.",
+    trTag: "Growth",
+    enTag: "Growth",
+  },
+  {
+    icon: Globe2,
+    trTitle: "Özel web sitesi + otomatik post bağlantısı",
+    enTitle: "Dedicated website + automated post system",
+    trDesc: "Mobil uygulamanıza özel web deneyimi kurup n8n tabanlı otomatik içerik sistemiyle doğrudan bağlıyoruz.",
+    enDesc: "We build a dedicated web experience for your app and connect it directly to your n8n-based automated content engine.",
+    trTag: "Ecosystem",
+    enTag: "Ecosystem",
+  },
+];
+
 const PUBLIC_PROFILE = {
   github: "https://github.com/abdullah-altunkaynak/agent-arena",
   linkedin: "https://www.linkedin.com/in/abdullah-altunkaynak-51104730b/",
@@ -61,6 +142,11 @@ const fadeUp = {
 };
 
 export default function Home() {
+  const [contentTab, setContentTab] = useState("tr");
+  const [mobileTab, setMobileTab] = useState("tr");
+  const isTurkish = contentTab === "tr";
+  const isMobileTurkish = mobileTab === "tr";
+
   return (
     <>
       <Head>
@@ -96,68 +182,276 @@ export default function Home() {
           >
             <div className="rounded-3xl p-8 md:p-10 glass border border-[rgba(34,211,238,.18)] relative">
               <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
-              <div className="relative z-10 grid gap-8 md:grid-cols-[1.2fr_.8fr]">
-                <div>
-                  <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-3">Otomatik Icerik Motoru</p>
-                  <h2 className="font-display font-bold text-3xl md:text-4xl text-spark mb-4">
-                    n8n + AI ile yerelde, ucretsiz ve tam otomatik icerik uretimi
-                  </h2>
-                  <p className="text-wire leading-relaxed mb-5">
-                    n8n ve yapay zekayi birlestirerek, lokalde calisan akislardan tamamen ucretsiz
-                    post uretip paylasiyoruz. Wordpress, ozel yazilim backend ya da farkli platformlar
-                    fark etmez; ayni akisi birkac farkli sitede calistirabiliyoruz.
-                  </p>
-                  <p className="text-wire leading-relaxed">
-                    Eski yazilara otomatik SEO puanlamasi yapip yazilari guncelliyoruz, Pexels'ten uygun
-                    gorseller bulup icerige ekliyoruz. Sonuc: daha guncel, daha hizli ve daha etkili
-                    icerik.
-                  </p>
-
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <a
-                      href="https://karshu.blog"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 hover:text-white hover:border-cyan-400/60 transition-all"
+              <div className="relative z-10 space-y-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-xs font-mono uppercase tracking-widest text-mist">Dil Seçimi</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setContentTab("tr")}
+                      className={`px-3 py-1.5 rounded-full text-xs font-mono border transition-all ${isTurkish
+                        ? "bg-cyan-400/20 text-cyan-200 border-cyan-400/50"
+                        : "bg-abyss/60 text-mist border-[rgba(255,255,255,.08)] hover:border-cyan-400/30"
+                        }`}
                     >
-                      Karshu.blog'u ziyaret et
-                      <ArrowRight size={16} />
-                    </a>
-                    <a
-                      href={`mailto:${PUBLIC_PROFILE.email}`}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-forge border border-[rgba(255,255,255,.08)] text-wire hover:text-cyan-300 hover:border-cyan-400/40 transition-all"
+                      TR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setContentTab("en")}
+                      className={`px-3 py-1.5 rounded-full text-xs font-mono border transition-all ${!isTurkish
+                        ? "bg-cyan-400/20 text-cyan-200 border-cyan-400/50"
+                        : "bg-abyss/60 text-mist border-[rgba(255,255,255,.08)] hover:border-cyan-400/30"
+                        }`}
                     >
-                      Ucretsiz danismanlik al
-                      <ChevronRight size={16} />
-                    </a>
+                      EN
+                    </button>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {[
-                    "n8n ile akislari dakikalar icinde kurulum",
-                    "Tam otomatik post uretimi ve planlama",
-                    "Eski yazilarda SEO puanlama ve iyilestirme",
-                    "Pexels kaynakli gorsel otomasyonu",
-                    "Uygun fiyatli kurulum + istege bagli gelistirme",
-                  ].map((item, index) => (
-                    <motion.div
-                      key={item}
-                      initial={{ opacity: 0, x: 10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.08 }}
-                      className="flex items-start gap-3 rounded-2xl p-4 bg-abyss/70 border border-[rgba(255,255,255,.06)]"
-                    >
-                      <span className="mt-1 w-2.5 h-2.5 rounded-full bg-acid-400 shadow-[0_0_12px_rgba(74,222,128,.6)]" />
-                      <p className="text-sm text-wire leading-relaxed">{item}</p>
-                    </motion.div>
-                  ))}
-                  <div className="rounded-2xl p-4 bg-cyan-400/10 border border-cyan-400/20">
-                    <p className="text-sm text-cyan-200 leading-relaxed">
-                      Uygun fiyatlarla kurulum yapabilir, ihtiyaca gore akislari ozellestirebiliriz.
-                      Ucretsiz danismanlik icin bizimle iletisime gecin.
+                <div className="grid gap-8 md:grid-cols-[1.2fr_.8fr]">
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-3">
+                        Otomatik İçerik Motoru · Automated Content Engine
+                      </p>
+                      <h2 className="font-display font-bold text-3xl md:text-4xl text-spark mb-4">
+                        {isTurkish
+                          ? "n8n + AI ile yerelde, ücretsiz ve tam otomatik içerik üretimi"
+                          : "Local, free, and fully automated content production with n8n + AI"}
+                        <span className="block text-base md:text-lg text-cyan-200 font-medium mt-2">
+                          {isTurkish
+                            ? "Local, free, and fully automated content production with n8n + AI"
+                            : "n8n + AI ile yerelde, ücretsiz ve tam otomatik içerik üretimi"}
+                        </span>
+                      </h2>
+                      {isTurkish ? (
+                        <>
+                          <p className="text-wire leading-relaxed mb-5">
+                            n8n ve yapay zekayı birleştirerek, lokalde çalışan akışlardan tamamen ücretsiz
+                            post üretip paylaşıyoruz. WordPress, özel yazılım backend ya da farklı platformlar
+                            fark etmez; aynı akışı birkaç farklı sitede çalıştırabiliyoruz.
+                          </p>
+                          <p className="text-wire leading-relaxed">
+                            Eski yazılara otomatik SEO puanlaması yapıp yazıları güncelliyoruz, Pexels'ten uygun
+                            görseller bulup içeriğe ekliyoruz. Sonuç: daha güncel, daha hızlı ve daha etkili
+                            içerik.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-wire leading-relaxed mb-5">
+                            By combining n8n and AI, we run local workflows that generate and publish posts
+                            at no cost. Whether it is WordPress, a custom backend, or another platform, the
+                            same flow can run across multiple websites.
+                          </p>
+                          <p className="text-wire leading-relaxed">
+                            We automatically score legacy posts for SEO, refresh the content, and enrich it
+                            with images sourced from Pexels. The result is fresher, faster, and higher-performing
+                            publishing.
+                          </p>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <a
+                        href="https://karshu.blog"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 hover:text-white hover:border-cyan-400/60 transition-all"
+                      >
+                        {isTurkish ? "Karshu.blog'u ziyaret et" : "Visit karshu.blog"}
+                        <ArrowRight size={16} />
+                      </a>
+                      <a
+                        href={`mailto:${PUBLIC_PROFILE.email}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-forge border border-[rgba(255,255,255,.08)] text-wire hover:text-cyan-300 hover:border-cyan-400/40 transition-all"
+                      >
+                        {isTurkish ? "Ücretsiz danışmanlık al" : "Get free consultation"}
+                        <ChevronRight size={16} />
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-xs font-mono uppercase tracking-widest text-mist">
+                      {isTurkish ? "Türkçe" : "English"}
                     </p>
+                    {(isTurkish ? N8N_TR_FEATURES : N8N_EN_FEATURES).map((item, index) => (
+                      <motion.div
+                        key={item}
+                        initial={{ opacity: 0, x: 10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.08 }}
+                        className="flex items-start gap-3 rounded-2xl p-4 bg-abyss/70 border border-[rgba(255,255,255,.06)]"
+                      >
+                        <span
+                          className={`mt-1 w-2.5 h-2.5 rounded-full shadow-[0_0_12px_rgba(74,222,128,.6)] ${isTurkish ? "bg-acid-400" : "bg-cyan-400"
+                            }`}
+                        />
+                        <p className="text-sm text-wire leading-relaxed">{item}</p>
+                      </motion.div>
+                    ))}
+
+                    <div className="rounded-2xl p-4 bg-cyan-400/10 border border-cyan-400/20">
+                      {isTurkish ? (
+                        <p className="text-sm text-cyan-200 leading-relaxed">
+                          Uygun fiyatlarla kurulum yapabilir, ihtiyaca göre akışları özelleştirebiliriz.
+                          Ücretsiz danışmanlık için bizimle iletişime geçin.
+                        </p>
+                      ) : (
+                        <p className="text-sm text-cyan-100 leading-relaxed">
+                          We can deliver affordable setups and tailor workflows as needed. Reach out for
+                          free consultation.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ── MOBILE APP + AI SYSTEMS ─────────────────────────────── */}
+        <section className="relative py-20 px-6 border-b border-[rgba(255,255,255,.05)] overflow-hidden">
+          <div className="absolute inset-0 bg-glow-radial opacity-20 pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[55rem] h-64 bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 left-8 w-64 h-64 rounded-full bg-acid-400/10 blur-3xl pointer-events-none" />
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-6xl mx-auto"
+          >
+            <div className="relative rounded-3xl p-8 md:p-10 border border-[rgba(34,211,238,.2)] glass overflow-hidden">
+              <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
+
+              <div className="relative z-10 space-y-8">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-3">
+                      {isMobileTurkish ? "Mobil Ürün Stüdyosu" : "Mobile Product Studio"}
+                    </p>
+                    <h2 className="font-display font-bold text-3xl md:text-4xl text-spark leading-tight">
+                      {isMobileTurkish
+                        ? "Fikirden mağaza yayınına tam mobil ürün ekosistemi"
+                        : "Full mobile product ecosystem from idea to store launch"}
+                    </h2>
+                  </div>
+
+                  <div className="flex items-center gap-2 rounded-full border border-[rgba(255,255,255,.09)] bg-abyss/70 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab("tr")}
+                      className={`px-3 py-1.5 rounded-full text-xs font-mono border transition-all ${isMobileTurkish
+                          ? "bg-cyan-400/20 text-cyan-200 border-cyan-400/50"
+                          : "bg-transparent text-mist border-transparent hover:border-cyan-400/20"
+                        }`}
+                    >
+                      TR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab("en")}
+                      className={`px-3 py-1.5 rounded-full text-xs font-mono border transition-all ${!isMobileTurkish
+                          ? "bg-cyan-400/20 text-cyan-200 border-cyan-400/50"
+                          : "bg-transparent text-mist border-transparent hover:border-cyan-400/20"
+                        }`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-8 lg:grid-cols-[1.2fr_.8fr]">
+                  <div className="relative pl-8 md:pl-10">
+                    <div className="absolute left-3 md:left-4 top-2 bottom-2 w-px bg-gradient-to-b from-cyan-400/50 via-cyan-400/20 to-transparent" />
+
+                    <div className="space-y-4">
+                      {MOBILE_TIMELINE.map((step, index) => {
+                        const Icon = step.icon;
+                        return (
+                          <motion.div
+                            key={step.enTitle}
+                            initial={{ opacity: 0, y: 18 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: index * 0.08 }}
+                            className="relative rounded-2xl p-4 md:p-5 bg-abyss/80 border border-[rgba(255,255,255,.08)]"
+                          >
+                            <span className="absolute -left-[1.85rem] md:-left-[2.1rem] top-6 w-4 h-4 rounded-full border border-cyan-300/60 bg-cyan-400/20 shadow-[0_0_16px_rgba(34,211,238,.45)]" />
+                            <div className="flex items-start gap-4">
+                              <div className="w-11 h-11 rounded-xl border border-cyan-400/30 bg-cyan-400/10 flex items-center justify-center shrink-0">
+                                <Icon size={20} className="text-cyan-300" />
+                              </div>
+                              <div>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-widest text-cyan-200 bg-cyan-400/10 border border-cyan-400/25 mb-2">
+                                  {isMobileTurkish ? step.trTag : step.enTag}
+                                </span>
+                                <h3 className="text-spark font-semibold text-base md:text-lg mb-1">
+                                  {isMobileTurkish ? step.trTitle : step.enTitle}
+                                </h3>
+                                <p className="text-sm text-wire leading-relaxed">
+                                  {isMobileTurkish ? step.trDesc : step.enDesc}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="rounded-2xl p-5 border border-[rgba(255,255,255,.08)] bg-gradient-to-br from-cyan-500/10 to-abyss/80">
+                      <p className="text-xs font-mono uppercase tracking-widest text-cyan-300 mb-2">
+                        {isMobileTurkish ? "Görsel Ürün Kimliği" : "Visual Product Identity"}
+                      </p>
+                      <h3 className="text-spark text-lg font-semibold mb-2">
+                        {isMobileTurkish ? "Uygulama + web + içerik tek büyüme ağında" : "App + web + content in one growth network"}
+                      </h3>
+                      <p className="text-sm text-wire leading-relaxed">
+                        {isMobileTurkish
+                          ? "Mobil ürününüzü mağazada görünür kılarken, web sitesi ve otomatik içerik sistemiyle sürekli trafik ve dönüşüm üreten bir yapıya bağlıyoruz."
+                          : "We connect your mobile product to a website and automated content engine, creating continuous traffic and conversion loops after launch."}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl p-4 border border-[rgba(255,255,255,.08)] bg-abyss/80">
+                      <div className="flex items-center gap-2 text-cyan-300 mb-3">
+                        <Sparkles size={16} />
+                        <span className="text-xs font-mono uppercase tracking-widest">
+                          {isMobileTurkish ? "Hizmet Kapsamı" : "Service Scope"}
+                        </span>
+                      </div>
+                      {(isMobileTurkish ? MOBILE_TR_FEATURES : MOBILE_EN_FEATURES).map((item) => (
+                        <div key={item} className="flex items-start gap-2 mb-2 last:mb-0">
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-acid-400" />
+                          <p className="text-sm text-wire leading-relaxed">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 pt-1">
+                      <a
+                        href={`mailto:${PUBLIC_PROFILE.email}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-400/20 border border-cyan-400/40 text-cyan-200 hover:text-white hover:border-cyan-300 transition-all"
+                      >
+                        {isMobileTurkish ? "Mobil proje için iletişime geç" : "Contact us for your mobile project"}
+                        <ArrowRight size={16} />
+                      </a>
+                      <Link
+                        href="/about"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-forge border border-[rgba(255,255,255,.08)] text-wire hover:text-cyan-300 hover:border-cyan-400/40 transition-all"
+                      >
+                        {isMobileTurkish ? "Hakkımızda" : "About us"}
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -479,7 +773,7 @@ export default function Home() {
           </motion.div>
         </section>
 
-      </div>
+      </div >
     </>
   );
 }

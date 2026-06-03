@@ -18,6 +18,7 @@ import {
 
 const NAV_LINKS = [
   { href: "/#ai-chat", label: "AI Chat", icon: MessageSquare },
+  { href: "/about", label: "About", icon: LayoutDashboard },
   { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/blog/tech-news", label: "Tech News", icon: Newspaper },
   { href: "/community", label: "Community", icon: Users },

@@ -1,108 +1,170 @@
-import React from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Head from "next/head";
+import Link from "next/link";
+import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import Navbar from "../components/Navbar";
+
+const TERMS_TR = [
+    {
+        title: "1. Şartların Kabulü",
+        body: "Agent Arena web sitesi ve hizmetlerine erişerek bu Hizmet Şartları'nı kabul etmiş olursunuz. Şartları kabul etmiyorsanız lütfen hizmeti kullanmayın.",
+    },
+    {
+        title: "2. Kullanım Lisansı",
+        body: "Sitedeki materyalleri kişisel ve ticari olmayan geçici görüntüleme amacıyla kullanabilirsiniz. İçeriği kopyalama, ticari amaçla kullanma, tersine mühendislik yapma veya telif ibarelerini kaldırma yasaktır.",
+    },
+    {
+        title: "3. Sorumluluk Reddi",
+        body: "Sitedeki içerikler 'olduğu gibi' sunulur. Agent Arena, açık veya zımni hiçbir garanti vermez; belirli bir amaca uygunluk veya hak ihlali olmaması gibi garantiler dahil değildir.",
+    },
+    {
+        title: "4. Sorumluluğun Sınırlandırılması",
+        body: "Agent Arena, veri kaybı, kar kaybı veya iş kesintisi gibi dolaylı/doğrudan zararlardan sorumlu tutulamaz.",
+    },
+    {
+        title: "5. İçerik Doğruluğu",
+        body: "Sitedeki içeriklerde teknik veya yazımsal hatalar bulunabilir. Agent Arena içeriklerin tam, doğru veya güncel olduğunu garanti etmez.",
+    },
+    {
+        title: "6. Harici Bağlantılar",
+        body: "Siteden verilen üçüncü taraf bağlantıların içeriğinden Agent Arena sorumlu değildir. Bu bağlantıların kullanımı kullanıcı sorumluluğundadır.",
+    },
+    {
+        title: "7. Değişiklikler",
+        body: "Agent Arena bu şartları önceden bildirim yapmadan güncelleyebilir. Siteyi kullanmaya devam etmeniz yeni şartları kabul ettiğiniz anlamına gelir.",
+    },
+    {
+        title: "8. Uygulanacak Hukuk",
+        body: "Bu şartlar Agent Arena'nın faaliyet gösterdiği yargı alanı hukukuna tabidir ve ilgili mahkemelerin yetkisini kabul etmiş olursunuz.",
+    },
+    {
+        title: "9. Kullanıcı İçeriği",
+        body: "Siteye gönderdiğiniz içerikler için Agent Arena'ya dünya çapında, telifsiz ve münhasır olmayan kullanım, çoğaltma ve dağıtım lisansı verirsiniz.",
+    },
+    {
+        title: "10. Fikri Mülkiyet",
+        body: "Metin, görsel, logo, ses ve video dahil tüm içerikler Agent Arena veya içerik sağlayıcılarına aittir ve telif haklarıyla korunur.",
+    },
+    {
+        title: "11. İletişim",
+        body: "Hizmet şartları ile ilgili sorularınız için footer bölümünde yer alan e-posta üzerinden bizimle iletişime geçebilirsiniz.",
+    },
+];
+
+const TERMS_EN = [
+    {
+        title: "1. Agreement to Terms",
+        body: "By accessing Agent Arena and its services, you agree to be bound by these Terms of Service. If you do not agree, please do not use the service.",
+    },
+    {
+        title: "2. Use License",
+        body: "You may temporarily access site materials for personal, non-commercial viewing. Copying, commercial use, reverse engineering, or removing proprietary notices is prohibited.",
+    },
+    {
+        title: "3. Disclaimer",
+        body: "Materials are provided 'as is'. Agent Arena makes no express or implied warranties, including merchantability, fitness for a particular purpose, or non-infringement.",
+    },
+    {
+        title: "4. Limitation of Liability",
+        body: "Agent Arena shall not be liable for any indirect or direct damages, including data loss, profit loss, or business interruption.",
+    },
+    {
+        title: "5. Accuracy of Materials",
+        body: "Site content may include technical or typographical errors. Agent Arena does not warrant that materials are accurate, complete, or current.",
+    },
+    {
+        title: "6. External Links",
+        body: "Agent Arena is not responsible for third-party website content linked from this site. Use of external links is at your own risk.",
+    },
+    {
+        title: "7. Revisions",
+        body: "Agent Arena may revise these terms at any time without prior notice. Continued use of the site means you accept the updated terms.",
+    },
+    {
+        title: "8. Governing Law",
+        body: "These terms are governed by the laws of the jurisdiction where Agent Arena operates, and you submit to the jurisdiction of those courts.",
+    },
+    {
+        title: "9. User-Generated Content",
+        body: "By submitting content, you grant Agent Arena a worldwide, royalty-free, non-exclusive license to use, reproduce, and distribute such content.",
+    },
+    {
+        title: "10. Intellectual Property",
+        body: "All text, visuals, logos, audio, and video on Agent Arena are owned by Agent Arena or its suppliers and protected by copyright laws.",
+    },
+    {
+        title: "11. Contact",
+        body: "If you have questions regarding these terms, please contact us via the email address listed in the footer.",
+    },
+];
 
 export default function TermsOfService() {
-    const isDark = true;
+    const [language, setLanguage] = useState("tr");
+    const isTurkish = language === "tr";
+    const terms = isTurkish ? TERMS_TR : TERMS_EN;
 
     return (
         <>
             <Head>
-                <title>Terms of Service | Agent Arena</title>
-                <meta name="description" content="Terms of Service for Agent Arena - Read our legal terms and conditions." />
+                <title>{isTurkish ? "Kullanım Şartları | Agent Arena" : "Terms of Service | Agent Arena"}</title>
+                <meta
+                    name="description"
+                    content={
+                        isTurkish
+                            ? "Agent Arena kullanım şartları, haklar, sorumluluklar ve yasal koşullar."
+                            : "Agent Arena Terms of Service, rights, responsibilities, and legal conditions."
+                    }
+                />
                 <meta name="robots" content="index, follow" />
             </Head>
 
             <Navbar />
 
-            <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-                {/* Header */}
-                <div className={`${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'} border-b`}>
-                    <div className="max-w-4xl mx-auto px-4 py-12">
-                        <Link
-                            href="/"
-                            className={`inline-flex items-center gap-2 mb-6 transition-colors ${isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-700'}`}
-                        >
+            <div className="min-h-screen bg-slate-900 text-slate-200">
+                <div className="border-b border-slate-700 bg-slate-800/40">
+                    <div className="max-w-5xl mx-auto px-4 py-12">
+                        <Link href="/" className="inline-flex items-center gap-2 mb-6 text-cyan-400 hover:text-cyan-300 transition-colors">
                             <ArrowLeft size={18} />
-                            Back to Home
+                            {isTurkish ? "Ana Sayfaya Dön" : "Back to Home"}
                         </Link>
-                        <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            Terms of Service
-                        </h1>
-                        <p className={`mt-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                            Last updated: April 16, 2026
-                        </p>
+
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <h1 className="text-4xl font-bold text-white">
+                                    {isTurkish ? "Kullanım Şartları" : "Terms of Service"}
+                                </h1>
+                                <p className="mt-2 text-slate-400">{isTurkish ? "Son güncelleme: 3 Haziran 2026" : "Last updated: June 3, 2026"}</p>
+                            </div>
+
+                            <div className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setLanguage("tr")}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${isTurkish ? "bg-cyan-400/20 text-cyan-200" : "text-slate-400 hover:text-slate-200"
+                                        }`}
+                                >
+                                    TR
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setLanguage("en")}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${!isTurkish ? "bg-cyan-400/20 text-cyan-200" : "text-slate-400 hover:text-slate-200"
+                                        }`}
+                                >
+                                    EN
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="max-w-4xl mx-auto px-4 py-12">
-                    <div className={`prose max-w-none ${isDark ? 'prose-invert prose-headings:text-white prose-p:text-slate-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300' : 'prose-slate prose-headings:text-slate-900 prose-p:text-slate-800 prose-a:text-blue-600 hover:prose-a:text-blue-700'}`}>
-                        <h2>1. Agreement to Terms</h2>
-                        <p>
-                            By accessing and using the Agent Arena website and services ("the Service"), you are agreeing to be bound by these Terms of Service. If you do not agree to abide by the above, please do not use this service.
-                        </p>
-
-                        <h2>2. Use License</h2>
-                        <p>
-                            Permission is granted to temporarily download one copy of the materials (information or software) on Agent Arena's website for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
-                        </p>
-                        <ul>
-                            <li>Modifying or copying the materials</li>
-                            <li>Using the materials for any commercial purpose or for any public display</li>
-                            <li>Attempting to decompile or reverse engineer any software contained on the website</li>
-                            <li>Removing any copyright or other proprietary notations from the materials</li>
-                            <li>Transferring the materials to another person or "mirroring" the materials on any other server</li>
-                            <li>Violating any applicable laws or regulations</li>
-                        </ul>
-
-                        <h2>3. Disclaimer</h2>
-                        <p>
-                            The materials on Agent Arena's website are provided on an 'as is' basis. Agent Arena makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
-                        </p>
-
-                        <h2>4. Limitations</h2>
-                        <p>
-                            In no event shall Agent Arena or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on Agent Arena's website, even if Agent Arena or an authorized representative has been notified of the possibility of such damage.
-                        </p>
-
-                        <h2>5. Accuracy of Materials</h2>
-                        <p>
-                            The materials appearing on Agent Arena's website could include technical, typographical, or photographic errors. Agent Arena does not warrant that any of the materials on its website are accurate, complete, or current. Agent Arena may make changes to the materials contained on its website at any time without notice.
-                        </p>
-
-                        <h2>6. Links</h2>
-                        <p>
-                            Agent Arena has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by Agent Arena of the site. Use of any such linked website is at the user's own risk.
-                        </p>
-
-                        <h2>7. Modifications</h2>
-                        <p>
-                            Agent Arena may revise these Terms of Service for its website at any time without notice. By using this website, you are agreeing to be bound by the then current version of these Terms of Service.
-                        </p>
-
-                        <h2>8. Governing Law</h2>
-                        <p>
-                            These terms and conditions are governed by and construed in accordance with the laws of the jurisdiction in which Agent Arena operates, and you irrevocably submit to the exclusive jurisdiction of the courts in that location.
-                        </p>
-
-                        <h2>9. User-Generated Content</h2>
-                        <p>
-                            By submitting content to Agent Arena (including but not limited to comments, posts, or any other user-generated materials), you grant Agent Arena a non-exclusive, royalty-free, perpetual, and worldwide license to use, reproduce, modify, and distribute such content.
-                        </p>
-
-                        <h2>10. Intellectual Property Rights</h2>
-                        <p>
-                            All content on Agent Arena, including but not limited to text, graphics, logos, images, audio, and video, is the property of Agent Arena or its content suppliers and is protected by international copyright laws.
-                        </p>
-
-                        <h2>11. Contact Us</h2>
-                        <p>
-                            If you have any questions about these Terms of Service, please contact us through our website's contact form or email address listed in the footer.
-                        </p>
-                    </div>
+                <div className="max-w-5xl mx-auto px-4 py-12 grid gap-4">
+                    {terms.map((item) => (
+                        <section key={item.title} className="rounded-2xl border border-slate-700/60 bg-slate-800/40 p-6">
+                            <h2 className="text-xl font-semibold text-white mb-3">{item.title}</h2>
+                            <p className="text-slate-300 leading-relaxed">{item.body}</p>
+                        </section>
+                    ))}
                 </div>
             </div>
         </>
