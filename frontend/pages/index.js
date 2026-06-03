@@ -81,6 +81,90 @@ export default function Home() {
 
         <AIChatSection />
 
+        {/* ── N8N + AI CONTENT ENGINE ──────────────────────────────── */}
+        <section className="relative py-20 px-6 border-b border-[rgba(255,255,255,.05)] overflow-hidden">
+          <div className="absolute inset-0 bg-glow-radial opacity-25 pointer-events-none" />
+          <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-acid-400/10 blur-3xl pointer-events-none" />
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-5xl mx-auto"
+          >
+            <div className="rounded-3xl p-8 md:p-10 glass border border-[rgba(34,211,238,.18)] relative">
+              <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
+              <div className="relative z-10 grid gap-8 md:grid-cols-[1.2fr_.8fr]">
+                <div>
+                  <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-3">Otomatik Icerik Motoru</p>
+                  <h2 className="font-display font-bold text-3xl md:text-4xl text-spark mb-4">
+                    n8n + AI ile yerelde, ucretsiz ve tam otomatik icerik uretimi
+                  </h2>
+                  <p className="text-wire leading-relaxed mb-5">
+                    n8n ve yapay zekayi birlestirerek, lokalde calisan akislardan tamamen ucretsiz
+                    post uretip paylasiyoruz. Wordpress, ozel yazilim backend ya da farkli platformlar
+                    fark etmez; ayni akisi birkac farkli sitede calistirabiliyoruz.
+                  </p>
+                  <p className="text-wire leading-relaxed">
+                    Eski yazilara otomatik SEO puanlamasi yapip yazilari guncelliyoruz, Pexels'ten uygun
+                    gorseller bulup icerige ekliyoruz. Sonuc: daha guncel, daha hizli ve daha etkili
+                    icerik.
+                  </p>
+
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <a
+                      href="https://karshu.blog"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 hover:text-white hover:border-cyan-400/60 transition-all"
+                    >
+                      Karshu.blog'u ziyaret et
+                      <ArrowRight size={16} />
+                    </a>
+                    <a
+                      href={`mailto:${PUBLIC_PROFILE.email}`}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-forge border border-[rgba(255,255,255,.08)] text-wire hover:text-cyan-300 hover:border-cyan-400/40 transition-all"
+                    >
+                      Ucretsiz danismanlik al
+                      <ChevronRight size={16} />
+                    </a>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {[
+                    "n8n ile akislari dakikalar icinde kurulum",
+                    "Tam otomatik post uretimi ve planlama",
+                    "Eski yazilarda SEO puanlama ve iyilestirme",
+                    "Pexels kaynakli gorsel otomasyonu",
+                    "Uygun fiyatli kurulum + istege bagli gelistirme",
+                  ].map((item, index) => (
+                    <motion.div
+                      key={item}
+                      initial={{ opacity: 0, x: 10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.08 }}
+                      className="flex items-start gap-3 rounded-2xl p-4 bg-abyss/70 border border-[rgba(255,255,255,.06)]"
+                    >
+                      <span className="mt-1 w-2.5 h-2.5 rounded-full bg-acid-400 shadow-[0_0_12px_rgba(74,222,128,.6)]" />
+                      <p className="text-sm text-wire leading-relaxed">{item}</p>
+                    </motion.div>
+                  ))}
+                  <div className="rounded-2xl p-4 bg-cyan-400/10 border border-cyan-400/20">
+                    <p className="text-sm text-cyan-200 leading-relaxed">
+                      Uygun fiyatlarla kurulum yapabilir, ihtiyaca gore akislari ozellestirebiliriz.
+                      Ucretsiz danismanlik icin bizimle iletisime gecin.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
         {/* ── HERO ───────────────────────────────────────────────────────── */}
         <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-6 pt-8 pb-20 overflow-hidden">
           {/* Radial glow background */}

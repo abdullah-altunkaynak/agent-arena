@@ -226,17 +226,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* System status indicator */}
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-acid-400/10 border border-acid-400/20 text-xs font-mono text-acid-400">
-              <Activity size={11} className="animate-pulse" />
-              LIVE
-            </div>
-
-            {/* Theme toggle */}
-            {mounted && (
-              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-400/10 border border-cyan-400/20">
-              </div>
-            )}
 
             {/* Mobile menu toggle */}
             {currentUser && (
